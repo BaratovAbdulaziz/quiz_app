@@ -106,3 +106,45 @@
 - **Reason:** Dramatically simplifies the data model, API, and UI. The copy-based sharing model makes roles unnecessary. Can be added later if team features are introduced.
 - **Date:** 2026-07-02
 - **Status:** Approved
+
+### D016: Supabase as Database Provider
+
+- **Decision:** Use Supabase (managed PostgreSQL) for all structured data.
+- **Reason:** PostgreSQL compatibility means Drizzle ORM works directly. Managed service reduces ops overhead. Built-in auth helpers are useful but not required. Schema is relational (joins, foreign keys), which PostgreSQL handles naturally. Portable — can migrate off Supabase to any PostgreSQL host.
+- **Date:** 2026-07-02
+- **Status:** Approved
+
+### D017: Turborepo for Monorepo Management
+
+- **Decision:** Use Turborepo to manage the monorepo with `apps/web` and `apps/bot`.
+- **Reason:** Cached builds, parallel task execution, shared config, clean separation between web and bot apps.
+- **Date:** 2026-07-02
+- **Status:** Approved
+
+### D018: Drizzle ORM for Database Access
+
+- **Decision:** Use Drizzle ORM for type-safe database queries and migrations.
+- **Reason:** Lightweight, SQL-like API, excellent TypeScript support, works directly with PostgreSQL/Supabase without heavy abstraction. Migrations are simple and version-controlled.
+- **Date:** 2026-07-02
+- **Status:** Approved
+
+### D019: OpenRouter for AI Model Access
+
+- **Decision:** Route all AI calls through OpenRouter instead of directly using OpenAI.
+- **Reason:** Access to free/open models reduces cost during MVP. Not locked into a single provider. Can switch models (e.g. GPT-4o, Claude, open-source) without code changes. Same OpenAI-compatible API format.
+- **Date:** 2026-07-02
+- **Status:** Approved
+
+### D020: Python + aiogram for Telegram Bot
+
+- **Decision:** Write the Telegram bot in Python using aiogram 3.x.
+- **Reason:** aiogram is the most modern async Python bot framework. Polling mode is simpler than webhooks. Python's async ecosystem (asyncpg, SQLAlchemy async) works well for database access. Separate language from the web app is fine since the bot is a standalone service.
+- **Date:** 2026-07-02
+- **Status:** Approved
+
+### D021: Cloudflare R2 for File Storage
+
+- **Decision:** Use Cloudflare R2 (S3-compatible) for PDF file storage.
+- **Reason:** No egress fees, global edge network, S3-compatible API means existing patterns work, cost-effective for file serving.
+- **Date:** 2026-07-02
+- **Status:** Approved

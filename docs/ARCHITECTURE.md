@@ -3,58 +3,70 @@
 ## High-Level Overview
 
 ```
-┌─────────────┐     ┌──────────────┐     ┌─────────────┐
-│  Frontend   │────▶│   Backend    │────▶│  Database   │
-│  (React)    │     │  (Node.js)   │     │ (PostgreSQL)│
-└─────────────┘     └──────┬───────┘     └─────────────┘
+                    ┌─────────────────────┐
+                    │   Telegram Bot      │
+                    │   (Python/aiogram)  │
+                    └────────┬────────────┘
+                             │ polling
+                             ▼
+┌──────────────┐     ┌──────────────┐     ┌──────────────────┐
+│   Browser    │────▶│  Next.js App │────▶│    Supabase      │
+│  (React SPA) │     │  (API routes)│     │  (PostgreSQL)    │
+└──────────────┘     └──────┬───────┘     └──────────────────┘
                            │
                            ▼
-                    ┌──────────────┐     ┌─────────────┐
-                    │  AI Service  │     │   Storage   │
-                    │  (OpenAI)    │     │  (S3-compat)│
-                    └──────────────┘     └─────────────┘
+                    ┌──────────────┐     ┌──────────────────┐
+                    │  OpenRouter  │     │  Cloudflare R2   │
+                    │  (AI models) │     │  (File storage)  │
+                    └──────────────┘     └──────────────────┘
 ```
 
 ## Frontend
 
-- Single-page application built with React.
-- Responsive design (mobile-first).
-- Communicates with backend via REST API.
-- Hosted on a CDN.
+- Next.js 15 with App Router, React 19.
+- Responsive design, mobile-first.
+- Communicates with backend via API routes and server actions.
 
 ## Backend
 
-- Node.js REST API server.
+- Next.js API routes.
 - Handles authentication, quiz management, library operations.
-- Orchestrates AI service calls.
-- Serves the API documented in `API.md`.
+- Orchestrates AI calls through OpenRouter.
+- File upload/download via Cloudflare R2.
 
 ## AI Service
 
-- Serverless function or dedicated service.
-- Processes PDF text extraction, question parsing, and quiz generation.
-- Communicates with OpenAI API.
-- Validates and structures AI output before returning to backend.
+- Calls made through OpenRouter API, which routes to free/open AI models.
+- Handles PDF text extraction, question parsing, and quiz generation.
+- Validates and structures AI output before storing.
 
 ## Database
 
-- PostgreSQL for all structured data.
+- Supabase (managed PostgreSQL).
+- Drizzle ORM for type-safe queries and migrations.
 - Schema documented in `DATABASE.md`.
 
 ## Storage
 
-- S3-compatible object storage for PDF files.
-- Files are private by default; access-controlled via the backend.
+- Cloudflare R2 (S3-compatible) for PDF files.
+- Files are private; accessed via signed URLs.
 
 ## Authentication
 
-- JWT-based authentication with refresh token rotation.
-- Telegram login widget for authentication.
+- JWT-based with refresh token rotation.
+- Telegram login widget.
 - Detailed in `AUTHENTICATION.md`.
+
+## Telegram Bot
+
+- Python + aiogram 3.x.
+- Polling mode (no webhook).
+- Notifications only + menu button entry point.
+- Shared database with the web app.
 
 ## External Dependencies
 
-- OpenAI API (AI processing)
-- Telegram Bot API (authentication)
-- S3-compatible storage provider
-- CDN provider
+- OpenRouter API (AI processing)
+- Supabase (database)
+- Cloudflare R2 (file storage)
+- Telegram Bot API (authentication, notifications)

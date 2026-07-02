@@ -2,14 +2,25 @@
 
 ## Third-Party Services
 
-- **AI provider** — OpenAI API (GPT-4 or equivalent)
+- **AI provider** — OpenRouter (free model routing)
+- **Database** — Supabase (managed PostgreSQL)
+- **File storage** — Cloudflare R2
 - **Authentication** — Telegram Bot API
-- **File storage** — S3-compatible object storage
-- **Database** — PostgreSQL
+- **Bot hosting** — TBD
 
 ## Open Source Libraries
 
-(To be populated as dependencies are selected during development.)
+### Web App
+
+- Next.js, React, TypeScript
+- Tailwind CSS, shadcn/ui
+- Drizzle ORM
+- lucide-react, framer-motion
+
+### Telegram Bot
+
+- Python, aiogram 3.x
+- asyncpg / SQLAlchemy
 
 ## Icons and Assets
 

@@ -10,6 +10,10 @@ The AI service handles three tasks:
 
 The AI never modifies user content unnecessarily. All content remains in its original language unless the user explicitly requests translation.
 
+## Provider
+
+**OpenRouter** — routes requests to free/open AI models. Not bound to a single provider. Model selection is configurable and can change without affecting the application code.
+
 ---
 
 ## PDF Parsing Pipeline
@@ -85,7 +89,7 @@ When a user enters a topic:
 | PDF is scanned image-only | Return error: "This PDF appears to be a scanned image. OCR is required." |
 | PDF contains no questions | Return error: "No questions could be found in this document." |
 | Generated questions fail validation | Retry once with stricter prompt; if still failing, return error. |
-| AI service unavailable | Queue job for retry; notify user when complete. |
+| AI service unavailable (OpenRouter down) | Queue job for retry; notify user when complete. |
 | Rate limited | Exponential backoff with user-facing progress indicator. |
 
 ---

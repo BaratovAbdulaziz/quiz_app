@@ -2,7 +2,7 @@
 
 ## Overview
 
-PostgreSQL is the primary data store. Object storage (S3-compatible) is used for PDF files.
+**Supabase** (managed PostgreSQL) is the primary data store. Cloudflare R2 (S3-compatible) is used for PDF files. Queries and migrations are handled via **Drizzle ORM**.
 
 ## Core Entities
 
