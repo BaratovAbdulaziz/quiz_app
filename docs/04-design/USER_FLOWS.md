@@ -1,14 +1,31 @@
 # User Flows
 
-## Login
+## First-Time Bot Start
 
-1. User opens the application.
-2. Login screen displays the Telegram login button.
-3. User clicks the button and is redirected to Telegram.
-4. User authorizes the application.
-5. System creates an account automatically if new, or logs in if returning.
-6. User is redirected to the library.
-7. If authentication fails, an error message is shown.
+1. User finds the bot on Telegram.
+2. User clicks "Start".
+3. Bot sends a welcome message with a menu button that opens the web app.
+4. User clicks the menu button.
+5. Telegram opens the web app in its built-in browser.
+6. The web app receives the Telegram user data (ID, username, name).
+7. System creates an account automatically (no registration form).
+8. User lands in an empty library with a CTA to upload or generate a quiz.
+
+## Returning User Login
+
+1. User opens the bot on Telegram.
+2. User clicks the menu button.
+3. Telegram opens the web app.
+4. System recognises the returning Telegram user.
+5. User lands in their library with existing quizzes.
+
+## Receive Bot Notification
+
+1. System finishes processing a PDF upload.
+2. Bot sends a notification: "Your quiz [title] is ready. Open in app."
+3. User taps the notification or opens the bot.
+4. User clicks the menu button.
+5. Web app opens to the library with the new quiz visible.
 
 ## Upload PDF
 
