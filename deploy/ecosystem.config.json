@@ -1,0 +1,28 @@
+{
+  "apps": [
+    {
+      "name": "quiz-app-web",
+      "cwd": "apps/web",
+      "script": "node_modules/.bin/next",
+      "args": "start",
+      "env": {
+        "NODE_ENV": "production",
+        "PORT": "3000"
+      },
+      "env_file": "../../apps/web/.env",
+      "watch": false,
+      "instances": 1,
+      "exec_mode": "fork"
+    },
+    {
+      "name": "quiz-app-bot",
+      "cwd": "apps/bot",
+      "script": ".venv/bin/python",
+      "args": "src/main.py",
+      "env_file": "../../apps/bot/.env",
+      "watch": false,
+      "instances": 1,
+      "exec_mode": "fork"
+    }
+  ]
+}

@@ -1,3 +1,10 @@
 node_modules/
 .next/
 out/
+dist/
+.env
+*.tsbuildinfo
+__pycache__/
+*.pyc
+.venv/
+.venv*/

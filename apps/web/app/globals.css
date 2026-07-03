@@ -1,0 +1,189 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+:root {
+  --color-canvas: 255 255 255;
+  --color-surface: 247 247 247;
+  --color-surface-soft: 250 250 250;
+  --color-hairline: 229 229 229;
+  --color-hairline-soft: 237 237 237;
+  --color-btn-border: 229 229 229;
+  --color-ink: 10 10 10;
+  --color-steel: 90 90 92;
+  --color-muted: 168 168 170;
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slide-up {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes scale-in {
+  from { opacity: 0; transform: scale(0.92); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes slide-down {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.25s ease-out both;
+}
+
+.animate-slide-up {
+  animation: slide-up 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.animate-scale-in {
+  animation: scale-in 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.animate-slide-down {
+  animation: slide-down 0.3s ease-out both;
+}
+
+.dark {
+  --color-canvas: 10 10 10;
+  --color-surface: 28 28 30;
+  --color-surface-soft: 28 28 30;
+  --color-hairline: 58 58 60;
+  --color-hairline-soft: 58 58 60;
+  --color-btn-border: 255 255 255;
+  --color-ink: 229 229 229;
+  --color-steel: 142 142 144;
+  --color-muted: 110 110 112;
+}
+
+.dark .btn-primary {
+  background-color: #ffffff;
+  color: #0a0a0a;
+}
+.dark .btn-primary:active {
+  background-color: #e5e5e5;
+}
+.dark .btn-primary:disabled {
+  background-color: rgb(var(--color-hairline));
+  color: rgb(var(--color-muted));
+  cursor: not-allowed;
+}
+.dark .btn-icon {
+  background-color: rgb(var(--color-surface));
+}
+
+.select-all {
+  user-select: all;
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-primary text-on-primary rounded-full px-5 py-2.5 text-button-md inline-flex items-center justify-center gap-1.5 transition-colors duration-150 cursor-pointer;
+  }
+  .btn-primary:active {
+    @apply bg-charcoal;
+  }
+  .btn-primary:disabled {
+    @apply bg-hairline text-muted cursor-not-allowed;
+  }
+
+  .btn-accent-green {
+    @apply bg-brand-green text-primary rounded-full px-5 py-2.5 text-button-md inline-flex items-center justify-center gap-1.5 transition-colors duration-150 cursor-pointer;
+  }
+
+  .btn-on-dark {
+    @apply bg-on-dark text-primary rounded-full px-5 py-2.5 text-button-md inline-flex items-center justify-center gap-1.5 cursor-pointer;
+  }
+
+  .btn-secondary {
+    @apply bg-transparent text-ink rounded-full px-5 py-2.5 text-button-md inline-flex items-center justify-center gap-1.5 border border-btn-border transition-colors duration-150 cursor-pointer;
+  }
+  .btn-secondary:active {
+    @apply bg-surface;
+  }
+
+  .btn-ghost {
+    @apply bg-transparent text-ink rounded-md px-3 py-2 text-button-md inline-flex items-center justify-center gap-1.5 transition-colors duration-150 cursor-pointer;
+  }
+  .btn-ghost:hover {
+    @apply bg-surface;
+  }
+
+  .btn-icon {
+    @apply bg-canvas text-ink rounded-full w-8 h-8 inline-flex items-center justify-center border border-btn-border transition-colors duration-150 cursor-pointer shrink-0;
+  }
+  .btn-icon:hover {
+    @apply bg-surface;
+  }
+
+  .btn-danger {
+    @apply bg-brand-error text-white rounded-full px-5 py-2.5 text-button-md inline-flex items-center justify-center gap-1.5 transition-colors duration-150 cursor-pointer;
+  }
+  .btn-danger:active {
+    background-color: #bf4040;
+  }
+  .btn-danger:disabled {
+    @apply opacity-50 cursor-not-allowed;
+  }
+
+  .btn-ghost-danger {
+    @apply bg-transparent text-brand-error rounded-md px-3 py-2 text-button-md inline-flex items-center justify-center gap-1.5 transition-colors duration-150 cursor-pointer;
+  }
+  .btn-ghost-danger:hover {
+    background-color: rgba(212, 86, 86, 0.08);
+  }
+
+  .card-base {
+    @apply bg-canvas rounded-lg p-xl border border-hairline;
+  }
+
+  .card-feature {
+    @apply bg-surface rounded-lg p-xxl;
+  }
+
+  .text-input {
+    @apply bg-canvas text-ink rounded-md px-md py-sm border border-hairline text-body-md h-10 outline-none transition-colors duration-150 w-full;
+  }
+  .text-input:focus {
+    @apply border-2 border-brand-green;
+  }
+
+  .search-pill {
+    @apply bg-surface text-steel rounded-md px-md py-xs border border-hairline text-body-sm h-9 outline-none transition-colors duration-150 w-full;
+  }
+  .search-pill:focus {
+    @apply border-2 border-brand-green;
+  }
+
+  .sidebar-item {
+    @apply flex items-center gap-2 px-md py-1.5 rounded-sm text-body-sm text-steel transition-colors duration-150 cursor-pointer;
+  }
+  .sidebar-item:hover {
+    @apply bg-surface;
+  }
+  .sidebar-item-active {
+    @apply sidebar-item bg-surface text-ink font-medium;
+  }
+
+  .micro-uppercase {
+    @apply text-micro-uppercase uppercase tracking-[0.5px];
+  }
+
+  .hairline-border {
+    @apply border border-hairline;
+  }
+
+  .hairline-bottom {
+    @apply border-b border-hairline;
+  }
+
+
+}
