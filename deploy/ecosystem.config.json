@@ -13,16 +13,6 @@
       "watch": false,
       "instances": 1,
       "exec_mode": "fork"
-    },
-    {
-      "name": "quiz-app-bot",
-      "cwd": "apps/bot",
-      "script": ".venv/bin/python",
-      "args": "src/main.py",
-      "env_file": "../../apps/bot/.env",
-      "watch": false,
-      "instances": 1,
-      "exec_mode": "fork"
     }
   ]
 }

@@ -964,6 +964,18 @@ function App() {
   }
 
   if (screen === "admin") {
+    const [botStatus, setBotStatus] = useState("checking")
+    const [botToken, setBotToken] = useState("")
+    const [newBotToken, setNewBotToken] = useState("")
+    const [showTokenInput, setShowTokenInput] = useState(false)
+
+    useEffect(() => {
+      fetch("/api/admin/bot").then(r => r.json()).then(d => {
+        setBotStatus(d.data.status)
+        setBotToken(d.data.token)
+      }).catch(() => setBotStatus("unknown"))
+    }, [])
+
     return (
       <div key="admin" className="min-h-screen bg-canvas max-w-2xl mx-auto border-x border-hairline animate-slide-up">
         <header className="flex items-center gap-3 px-6 h-14 hairline-bottom">
@@ -971,8 +983,66 @@ function App() {
           <Logo size={20} />
           <h2 className="text-heading-5">Admin Panel</h2>
         </header>
-        <div className="px-6 py-6 space-y-6">
-          <div className="border-t border-hairline pt-4">
+        <div className="px-6 py-6 space-y-8">
+          <div>
+            <p className="micro-uppercase text-steel mb-3">Telegram Bot</p>
+            <div className="card-base p-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-body-sm text-ink">Status</span>
+                <span className={cn("text-caption font-medium px-2.5 py-0.5 rounded-full", botStatus === "running" ? "bg-brand-green-soft/20 text-brand-green-deep" : botStatus === "checking" ? "bg-surface text-muted border border-hairline" : "bg-brand-error/10 text-brand-error")}>
+                  {botStatus === "running" ? "Running" : botStatus === "checking" ? "Checking..." : "Stopped"}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-body-sm text-ink">Token</span>
+                <span className="text-caption text-muted font-mono">{botToken || "Not set"}</span>
+              </div>
+              <div className="flex gap-2">
+                {botStatus !== "running" ? (
+                  <button onClick={async () => {
+                    setBotStatus("checking")
+                    const res = await fetch("/api/admin/bot", {
+                      method: "POST", headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ password: "2312", action: "start" }),
+                    })
+                    const d = await res.json()
+                    setBotStatus(d.data?.status === "started" ? "running" : "stopped")
+                  }} className="btn-primary flex-1 text-sm !py-1.5">Start Bot</button>
+                ) : (
+                  <button onClick={async () => {
+                    const res = await fetch("/api/admin/bot", {
+                      method: "POST", headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ password: "2312", action: "stop" }),
+                    })
+                    const d = await res.json()
+                    setBotStatus(d.data?.status === "stopped" ? "stopped" : "running")
+                  }} className="btn-ghost border border-btn-border flex-1 text-sm !py-1.5">Stop Bot</button>
+                )}
+                <button onClick={() => { setShowTokenInput(!showTokenInput); setNewBotToken("") }} className="btn-ghost border border-btn-border text-sm !px-3 !py-1.5">
+                  {showTokenInput ? "Cancel" : "Set Token"}
+                </button>
+              </div>
+              {showTokenInput && (
+                <div className="flex gap-2 pt-1">
+                  <input value={newBotToken} onChange={e => setNewBotToken(e.target.value)} placeholder="Enter bot token" className="text-input flex-1 text-sm font-mono" autoFocus />
+                  <button onClick={async () => {
+                    if (!newBotToken.trim()) return
+                    const res = await fetch("/api/admin/bot", {
+                      method: "POST", headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ password: "2312", action: "token", token: newBotToken.trim() }),
+                    })
+                    if (res.ok) {
+                      setBotToken(`${newBotToken.trim().slice(0, 8)}...`)
+                      setShowTokenInput(false)
+                    }
+                  }} className="btn-primary text-sm !px-3 !py-1.5">Save</button>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div>
+            <p className="micro-uppercase text-steel mb-3">Danger Zone</p>
             <button
               onClick={async () => {
                 try {
