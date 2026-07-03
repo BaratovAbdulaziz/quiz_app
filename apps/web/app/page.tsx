@@ -965,25 +965,142 @@ function App() {
 
   if (screen === "admin") {
     const [botStatus, setBotStatus] = useState("checking")
-    const [botToken, setBotToken] = useState("")
-    const [newBotToken, setNewBotToken] = useState("")
-    const [showTokenInput, setShowTokenInput] = useState(false)
+    const [config, setConfig] = useState<Record<string, Record<string, string>> | null>(null)
+    const [dirty, setDirty] = useState<Record<string, string>>({})
+    const [saving, setSaving] = useState(false)
+    const [saved, setSaved] = useState(false)
 
     useEffect(() => {
-      fetch("/api/admin/bot").then(r => r.json()).then(d => {
-        setBotStatus(d.data.status)
-        setBotToken(d.data.token)
+      Promise.all([
+        fetch("/api/admin/bot").then(r => r.json()),
+        fetch("/api/admin/config").then(r => r.json()),
+      ]).then(([bot, cfg]) => {
+        setBotStatus(bot.data.status)
+        setConfig(cfg.data)
       }).catch(() => setBotStatus("unknown"))
     }, [])
 
+    function setField(section: string, key: string, val: string) {
+      setDirty(p => ({ ...p, [`${section}.${key}`]: val }))
+      setSaved(false)
+    }
+
+    async function saveConfig() {
+      setSaving(true)
+      const payload: Record<string, Record<string, string>> = {}
+      for (const [path, val] of Object.entries(dirty)) {
+        const [section, key] = path.split(".")
+        if (!payload[section]) payload[section] = {}
+        payload[section][key] = val
+      }
+      try {
+        const res = await fetch("/api/admin/config", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ password: "2312", ...payload }),
+        })
+        if (res.ok) {
+          setSaved(true)
+          setDirty({})
+          setConfig(p => {
+            if (!p) return p
+            const next = { ...p }
+            for (const [section, keys] of Object.entries(payload)) {
+              next[section] = { ...next[section], ...keys }
+            }
+            return next
+          })
+        }
+      } catch {}
+      setSaving(false)
+    }
+
     return (
-      <div key="admin" className="min-h-screen bg-canvas max-w-2xl mx-auto border-x border-hairline animate-slide-up">
+      <div key="admin" className="min-h-screen bg-canvas max-w-2xl mx-auto border-x border-hairline animate-slide-up" style={{ paddingBottom: "100px" }}>
         <header className="flex items-center gap-3 px-6 h-14 hairline-bottom">
           <button onClick={() => go("library")} className="btn-icon"><ArrowLeft size={16} /></button>
           <Logo size={20} />
           <h2 className="text-heading-5">Admin Panel</h2>
         </header>
         <div className="px-6 py-6 space-y-8">
+
+          <div>
+            <p className="micro-uppercase text-steel mb-3">Configuration</p>
+            <div className="card-base p-4 space-y-4">
+              <p className="text-caption text-muted">Database</p>
+              <div>
+                <label className="text-body-sm font-medium text-ink block mb-1">DATABASE_URL</label>
+                <input value={dirty["web.DATABASE_URL"] ?? config?.web?.DATABASE_URL ?? ""} onChange={e => setField("web", "DATABASE_URL", e.target.value)} className="text-input font-mono text-sm" placeholder="postgres://..." />
+              </div>
+
+              <div className="hairline" />
+
+              <p className="text-caption text-muted">Auth & Telegram</p>
+              <div>
+                <label className="text-body-sm font-medium text-ink block mb-1">JWT_SECRET</label>
+                <input value={dirty["web.JWT_SECRET"] ?? config?.web?.JWT_SECRET ?? ""} onChange={e => setField("web", "JWT_SECRET", e.target.value)} className="text-input font-mono text-sm" placeholder="your-jwt-secret" />
+              </div>
+              <div>
+                <label className="text-body-sm font-medium text-ink block mb-1">TELEGRAM_BOT_TOKEN (Web)</label>
+                <input value={dirty["web.TELEGRAM_BOT_TOKEN"] ?? config?.web?.TELEGRAM_BOT_TOKEN ?? ""} onChange={e => setField("web", "TELEGRAM_BOT_TOKEN", e.target.value)} className="text-input font-mono text-sm" placeholder="used to verify Telegram login" />
+              </div>
+              <div>
+                <label className="text-body-sm font-medium text-ink block mb-1">APP_URL</label>
+                <input value={dirty["web.APP_URL"] ?? config?.web?.APP_URL ?? ""} onChange={e => setField("web", "APP_URL", e.target.value)} className="text-input text-sm" placeholder="https://yourdomain.com" />
+              </div>
+
+              <div className="hairline" />
+
+              <p className="text-caption text-muted">AI (OpenRouter)</p>
+              <div>
+                <label className="text-body-sm font-medium text-ink block mb-1">OPENROUTER_API_KEY</label>
+                <input value={dirty["web.OPENROUTER_API_KEY"] ?? config?.web?.OPENROUTER_API_KEY ?? ""} onChange={e => setField("web", "OPENROUTER_API_KEY", e.target.value)} className="text-input font-mono text-sm" placeholder="sk-or-..." />
+              </div>
+
+              <div className="hairline" />
+
+              <p className="text-caption text-muted">File Storage (Cloudflare R2)</p>
+              <div>
+                <label className="text-body-sm font-medium text-ink block mb-1">R2_ENDPOINT</label>
+                <input value={dirty["web.R2_ENDPOINT"] ?? config?.web?.R2_ENDPOINT ?? ""} onChange={e => setField("web", "R2_ENDPOINT", e.target.value)} className="text-input text-sm" placeholder="https://..." />
+              </div>
+              <div>
+                <label className="text-body-sm font-medium text-ink block mb-1">R2_ACCESS_KEY</label>
+                <input value={dirty["web.R2_ACCESS_KEY"] ?? config?.web?.R2_ACCESS_KEY ?? ""} onChange={e => setField("web", "R2_ACCESS_KEY", e.target.value)} className="text-input font-mono text-sm" />
+              </div>
+              <div>
+                <label className="text-body-sm font-medium text-ink block mb-1">R2_SECRET_KEY</label>
+                <input value={dirty["web.R2_SECRET_KEY"] ?? config?.web?.R2_SECRET_KEY ?? ""} onChange={e => setField("web", "R2_SECRET_KEY", e.target.value)} className="text-input font-mono text-sm" />
+              </div>
+              <div>
+                <label className="text-body-sm font-medium text-ink block mb-1">R2_BUCKET</label>
+                <input value={dirty["web.R2_BUCKET"] ?? config?.web?.R2_BUCKET ?? ""} onChange={e => setField("web", "R2_BUCKET", e.target.value)} className="text-input text-sm" placeholder="quiz-app-files" />
+              </div>
+
+              <div className="hairline" />
+
+              <p className="text-caption text-muted">Bot</p>
+              <div>
+                <label className="text-body-sm font-medium text-ink block mb-1">BOT_TOKEN</label>
+                <input value={dirty["bot.BOT_TOKEN"] ?? config?.bot?.BOT_TOKEN ?? ""} onChange={e => setField("bot", "BOT_TOKEN", e.target.value)} className="text-input font-mono text-sm" placeholder="Telegram bot token" />
+              </div>
+              <div>
+                <label className="text-body-sm font-medium text-ink block mb-1">Bot DATABASE_URL</label>
+                <input value={dirty["bot.DATABASE_URL"] ?? config?.bot?.DATABASE_URL ?? ""} onChange={e => setField("bot", "DATABASE_URL", e.target.value)} className="text-input font-mono text-sm" placeholder="postgres://..." />
+              </div>
+              <div>
+                <label className="text-body-sm font-medium text-ink block mb-1">Bot WEB_APP_URL</label>
+                <input value={dirty["bot.WEB_APP_URL"] ?? config?.bot?.WEB_APP_URL ?? ""} onChange={e => setField("bot", "WEB_APP_URL", e.target.value)} className="text-input text-sm" placeholder="https://t.me/YourBot/app" />
+              </div>
+
+              <div className="flex items-center gap-2 pt-2">
+                <button onClick={saveConfig} disabled={saving || Object.keys(dirty).length === 0} className="btn-primary text-sm !py-1.5">
+                  {saving ? "Saving..." : "Save Configuration"}
+                </button>
+                {saved && <span className="text-caption text-brand-green">Saved!</span>}
+              </div>
+            </div>
+          </div>
+
           <div>
             <p className="micro-uppercase text-steel mb-3">Telegram Bot</p>
             <div className="card-base p-4 space-y-3">
@@ -992,10 +1109,6 @@ function App() {
                 <span className={cn("text-caption font-medium px-2.5 py-0.5 rounded-full", botStatus === "running" ? "bg-brand-green-soft/20 text-brand-green-deep" : botStatus === "checking" ? "bg-surface text-muted border border-hairline" : "bg-brand-error/10 text-brand-error")}>
                   {botStatus === "running" ? "Running" : botStatus === "checking" ? "Checking..." : "Stopped"}
                 </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-body-sm text-ink">Token</span>
-                <span className="text-caption text-muted font-mono">{botToken || "Not set"}</span>
               </div>
               <div className="flex gap-2">
                 {botStatus !== "running" ? (
@@ -1018,26 +1131,7 @@ function App() {
                     setBotStatus(d.data?.status === "stopped" ? "stopped" : "running")
                   }} className="btn-ghost border border-btn-border flex-1 text-sm !py-1.5">Stop Bot</button>
                 )}
-                <button onClick={() => { setShowTokenInput(!showTokenInput); setNewBotToken("") }} className="btn-ghost border border-btn-border text-sm !px-3 !py-1.5">
-                  {showTokenInput ? "Cancel" : "Set Token"}
-                </button>
               </div>
-              {showTokenInput && (
-                <div className="flex gap-2 pt-1">
-                  <input value={newBotToken} onChange={e => setNewBotToken(e.target.value)} placeholder="Enter bot token" className="text-input flex-1 text-sm font-mono" autoFocus />
-                  <button onClick={async () => {
-                    if (!newBotToken.trim()) return
-                    const res = await fetch("/api/admin/bot", {
-                      method: "POST", headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({ password: "2312", action: "token", token: newBotToken.trim() }),
-                    })
-                    if (res.ok) {
-                      setBotToken(`${newBotToken.trim().slice(0, 8)}...`)
-                      setShowTokenInput(false)
-                    }
-                  }} className="btn-primary text-sm !px-3 !py-1.5">Save</button>
-                </div>
-              )}
             </div>
           </div>
 
