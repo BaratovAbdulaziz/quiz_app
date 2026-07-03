@@ -13,7 +13,7 @@ import {
   completeSession, generateShareLink, updateSettings, deleteAccount,
 } from "@/lib/api-client"
 
-type Screen = "login" | "library" | "overview" | "practice" | "exam" | "results" | "settings"
+type Screen = "login" | "library" | "overview" | "practice" | "exam" | "results" | "settings" | "admin"
 
 interface Question {
   id: string
@@ -126,6 +126,11 @@ function App() {
   const [loading, setLoading] = useState(true)
   const [sessionId, setSessionId] = useState<string | null>(null)
   const [sessionMode, setSessionMode] = useState<"practice" | "exam">("practice")
+  const [siteKilled, setSiteKilled] = useState(false)
+  const [showAdminPassword, setShowAdminPassword] = useState(false)
+  const [adminPassword, setAdminPassword] = useState("")
+  const [adminAttempts, setAdminAttempts] = useState(0)
+  const [adminError, setAdminError] = useState("")
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const t = (key: string): string => {
@@ -165,6 +170,7 @@ function App() {
       setLoading(false)
     }
     init()
+    fetch("/api/admin/kill").then(r => r.json()).then(d => { if (d.data?.killed) setSiteKilled(true) }).catch(() => {})
   }, [])
 
   async function tryTelegramLogin() {
@@ -425,6 +431,22 @@ function App() {
     }
   }
 
+  if (siteKilled) {
+    return (
+      <div key="killed" className="min-h-screen bg-canvas flex flex-col items-center justify-center px-6 animate-fade-in">
+        <div className="max-w-sm w-full text-center space-y-4">
+          <div className="w-14 h-14 rounded-full bg-brand-error/10 flex items-center justify-center mx-auto">
+            <Trash2 size={24} className="text-brand-error" />
+          </div>
+          <h1 className="text-heading-3 text-ink">Site Killed</h1>
+          <p className="text-body-md text-steel leading-relaxed">
+            This site has been taken down by the administrator.
+          </p>
+        </div>
+      </div>
+    )
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-canvas flex items-center justify-center">
@@ -480,7 +502,18 @@ function App() {
           <div className="relative">
             <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-steel" />
             <input
-              value={search} onChange={e => setSearch(e.target.value)}
+              value={search} onChange={e => {
+                const v = e.target.value
+                if (v === "/pathfinder") {
+                  setSearch("")
+                  setShowAdminPassword(true)
+                  setAdminPassword("")
+                  setAdminAttempts(0)
+                  setAdminError("")
+                  return
+                }
+                setSearch(v)
+              }}
               placeholder={t("searchPlaceholder")}
               className="search-pill pl-9"
             />
@@ -542,6 +575,60 @@ function App() {
           </div>
         </div>
         <AddQuizModal open={showAddModal} folders={folders} onAdd={generateWithAI} onAddFolder={addFolder} onClose={() => setShowAddModal(false)} t={t} generating={generating} />
+        {showAdminPassword && (
+          <div className="fixed inset-0 flex items-center justify-center z-50 px-4 animate-fade-in" style={{ backgroundColor: "rgba(0,0,0,0.5)" }}>
+            <div className="card-base max-w-xs w-full p-6 animate-scale-in">
+              <p className="text-body-md-medium text-ink mb-1">Enter admin password</p>
+              <p className="text-body-sm text-steel mb-4">{3 - adminAttempts} attempts remaining</p>
+              <div className="space-y-3 mb-4">
+                <input
+                  value={adminPassword} onChange={e => setAdminPassword(e.target.value)}
+                  type="password"
+                  placeholder="••••"
+                  className="text-input"
+                  autoFocus
+                  onKeyDown={e => {
+                    if (e.key !== "Enter") return
+                    if (adminPassword === "2312") {
+                      setShowAdminPassword(false)
+                      setAdminError("")
+                      go("admin")
+                    } else {
+                      const newAttempts = adminAttempts + 1
+                      setAdminAttempts(newAttempts)
+                      setAdminError("Wrong password")
+                      setAdminPassword("")
+                      if (newAttempts >= 3) {
+                        setShowAdminPassword(false)
+                        setAdminError("")
+                      }
+                    }
+                  }}
+                />
+                {adminError && <p className="text-body-sm text-brand-error">{adminError}</p>}
+              </div>
+              <div className="flex gap-2.5">
+                <button onClick={() => { setShowAdminPassword(false); setAdminError("") }} className="btn-secondary flex-1">Cancel</button>
+                <button onClick={() => {
+                  if (adminPassword === "2312") {
+                    setShowAdminPassword(false)
+                    setAdminError("")
+                    go("admin")
+                  } else {
+                    const newAttempts = adminAttempts + 1
+                    setAdminAttempts(newAttempts)
+                    setAdminError("Wrong password")
+                    setAdminPassword("")
+                    if (newAttempts >= 3) {
+                      setShowAdminPassword(false)
+                      setAdminError("")
+                    }
+                  }
+                }} className="btn-primary flex-1">Submit</button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     )
   }
@@ -870,6 +957,38 @@ function App() {
                 <LogOut size={14} /> {t("loggedInAsAt")}{user.username}
               </button>
             </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (screen === "admin") {
+    return (
+      <div key="admin" className="min-h-screen bg-canvas max-w-2xl mx-auto border-x border-hairline animate-slide-up">
+        <header className="flex items-center gap-3 px-6 h-14 hairline-bottom">
+          <button onClick={() => go("library")} className="btn-icon"><ArrowLeft size={16} /></button>
+          <Logo size={20} />
+          <h2 className="text-heading-5">Admin Panel</h2>
+        </header>
+        <div className="px-6 py-6 space-y-6">
+          <div className="border-t border-hairline pt-4">
+            <button
+              onClick={async () => {
+                try {
+                  const res = await fetch("/api/admin/kill", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ password: "2312" }),
+                  })
+                  if (res.ok) setSiteKilled(true)
+                } catch {}
+                setSiteKilled(true)
+              }}
+              className="btn-ghost-danger w-full text-body-sm"
+            >
+              <Trash2 size={14} /> Kill Site
+            </button>
           </div>
         </div>
       </div>
