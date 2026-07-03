@@ -158,6 +158,13 @@ export async function completeSession(sessionId: string, timeSeconds?: number) {
   })
 }
 
+export async function generateAIQuiz(body: { topic: string; description?: string; folderId?: string | null; clarificationAnswer?: string }) {
+  return api<{ data: Record<string, unknown> }>("/ai/generate", {
+    method: "POST",
+    body: JSON.stringify(body),
+  })
+}
+
 export async function generateShareLink(quizId: string) {
   return api<{ data: { token: string; url: string } }>(`/quizzes/${quizId}/share`, {
     method: "POST",

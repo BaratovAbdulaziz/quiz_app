@@ -1,7 +1,6 @@
-const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY
+const OPENROUTER_API_KEYS = (process.env.OPENROUTER_API_KEYS || "").split(",").map(s => s.trim()).filter(Boolean)
 const OPENROUTER_BASE = "https://openrouter.ai/api/v1"
-const DEFAULT_MODEL = "openai/gpt-4o-mini"
-const FALLBACK_MODEL = "mistralai/mistral-7b-instruct"
+const FREE_MODELS = ["openrouter/free"]
 
 export interface AiGenerateOptions {
   prompt: string
@@ -16,15 +15,30 @@ export interface AiResponse {
   tokensUsed: number
 }
 
-async function callOpenRouter(options: AiGenerateOptions): Promise<AiResponse> {
-  const model = options.model || DEFAULT_MODEL
+function normalizeQuestion(q: any) {
+  return {
+    text: q.text || q.question || q.questionText || q.prompt || "",
+    options: q.options || q.answers || q.choices || q.answerOptions || [],
+    correctIndex: q.correctIndex ?? q.correctAnswer ?? q.correct ?? q.answerIndex ?? 0,
+    explanation: q.explanation || q.explain || q.reasoning || q.feedback || undefined,
+  }
+}
+
+export async function callOpenRouter(options: AiGenerateOptions, modelIdx = 0, keyIndex = 0): Promise<AiResponse> {
+  const apiKey = OPENROUTER_API_KEYS[keyIndex]
+  if (!apiKey) throw new Error("No OpenRouter API keys configured")
+
+  const model = options.model || FREE_MODELS[modelIdx]
+  if (!model) {
+    if (keyIndex + 1 < OPENROUTER_API_KEYS.length) return callOpenRouter(options, 0, keyIndex + 1)
+    throw new Error("All models exhausted")
+  }
 
   const res = await fetch(`${OPENROUTER_BASE}/chat/completions`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${OPENROUTER_API_KEY}`,
-      "HTTP-Referer": process.env.APP_URL || "http://localhost:3000",
+      Authorization: `Bearer ${apiKey}`,
     },
     body: JSON.stringify({
       model,
@@ -38,8 +52,8 @@ async function callOpenRouter(options: AiGenerateOptions): Promise<AiResponse> {
   })
 
   if (!res.ok) {
-    if (res.status === 429 && model !== FALLBACK_MODEL) {
-      return callOpenRouter({ ...options, model: FALLBACK_MODEL })
+    if (res.status === 429 || res.status >= 500 || res.status === 402) {
+      return callOpenRouter(options, modelIdx + 1, keyIndex)
     }
     const text = await res.text()
     throw new Error(`OpenRouter error ${res.status}: ${text.slice(0, 200)}`)
@@ -83,6 +97,7 @@ ${pdfText.slice(0, 15000)}`
     throw new Error("No questions found in AI response")
   }
 
+  parsed.questions = parsed.questions.map(normalizeQuestion)
   return parsed
 }
 
@@ -107,7 +122,12 @@ If the topic is too vague, set "clarificationNeeded" to a clarifying question in
 
   const response = await callOpenRouter({ prompt, temperature: 0.7 })
   const cleaned = response.content.replace(/```json|```/g, "").trim()
-  const parsed = JSON.parse(cleaned)
+  let parsed: any
+  try {
+    parsed = JSON.parse(cleaned)
+  } catch {
+    throw new Error(`AI returned unexpected response. Try a different topic. (${cleaned.slice(0, 80)})`)
+  }
 
   if (parsed.clarificationNeeded) {
     return { questions: [], clarificationNeeded: parsed.clarificationNeeded }
@@ -117,6 +137,7 @@ If the topic is too vague, set "clarificationNeeded" to a clarifying question in
     throw new Error("No questions generated")
   }
 
+  parsed.questions = parsed.questions.map(normalizeQuestion)
   return parsed
 }
 
@@ -127,9 +148,30 @@ export async function generateWithClarification(
 ): Promise<{
   questions: Array<{ text: string; options: string[]; correctIndex: number; explanation?: string }>
 }> {
-  const prompt = `Generate ${count} multiple-choice quiz questions about "${topic}". The user specified: "${clarificationAnswer}". Return ONLY valid JSON.`
+  const prompt = `Generate ${count} multiple-choice quiz questions about "${topic}". The user specified: "${clarificationAnswer}". Return ONLY valid JSON with no markdown formatting:
+
+{
+  "questions": [
+    {
+      "text": "Question text",
+      "options": ["Option A", "Option B", "Option C", "Option D"],
+      "correctIndex": 0,
+      "explanation": "Why this is correct"
+    }
+  ]
+}`
 
   const response = await callOpenRouter({ prompt, temperature: 0.7 })
   const cleaned = response.content.replace(/```json|```/g, "").trim()
-  return JSON.parse(cleaned)
+  let parsed: any
+  try {
+    parsed = JSON.parse(cleaned)
+  } catch {
+    throw new Error(`AI returned unexpected response. Try a different clarification. (${cleaned.slice(0, 80)})`)
+  }
+  if (!Array.isArray(parsed.questions)) {
+    throw new Error("No questions generated")
+  }
+  parsed.questions = parsed.questions.map(normalizeQuestion)
+  return parsed
 }

@@ -8,7 +8,7 @@ import en from "@/i18n/en.json"
 import uz from "@/i18n/uz.json"
 import ru from "@/i18n/ru.json"
 import {
-  setToken, loginWithTelegram, fetchMe, fetchQuizzes,
+  setToken, loginWithTelegram, fetchMe, fetchQuizzes, fetchQuiz, generateAIQuiz,
   fetchFolders, createFolder, startSession, submitAnswer, skipQuestion,
   completeSession, generateShareLink, updateSettings, deleteAccount,
 } from "@/lib/api-client"
@@ -51,10 +51,8 @@ interface UserInfo {
   creditsRefreshAt: string
 }
 
-type SessionInfo = {
-  id: string
-  mode: "practice" | "exam"
-  currentQuestionIndex: number
+type SessionData = {
+  session: { id: string; quizId: string; mode: "practice" | "exam"; status: string; total: number }
   questions: Array<{
     id: string
     text: string
@@ -118,6 +116,8 @@ function App() {
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [showShareModal, setShowShareModal] = useState(false)
   const [showAddModal, setShowAddModal] = useState(false)
+  const [clarificationQuestion, setClarificationQuestion] = useState<string | null>(null)
+  const [pendingGeneration, setPendingGeneration] = useState<{ title: string; description: string; folderId: string | null } | null>(null)
   const [showNewFolderInput, setShowNewFolderInput] = useState(false)
   const [newFolderName, setNewFolderName] = useState("")
   const [quizzes, setQuizzes] = useState<Quiz[]>([])
@@ -132,6 +132,22 @@ function App() {
   const [adminAttempts, setAdminAttempts] = useState(0)
   const [adminError, setAdminError] = useState("")
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const [botStatus, setBotStatus] = useState("checking")
+  const [cfg, setCfg] = useState<Record<string, string> | null>(null)
+  const [dirty, setDirty] = useState<Record<string, string>>({})
+  const [saving, setSaving] = useState(false)
+  const [saved, setSaved] = useState(false)
+
+  useEffect(() => {
+    Promise.all([
+      fetch("/api/admin/bot").then(r => r.json()).catch(() => ({ data: { status: "stopped" } })),
+      fetch("/api/admin/config").then(r => r.json()).catch(() => ({ data: null })),
+    ]).then(([bot, c]) => {
+      setBotStatus(bot.data?.status || "stopped")
+      setCfg(c.data)
+    })
+  }, [])
 
   const t = (key: string): string => {
     const lang = T[language]
@@ -216,12 +232,33 @@ function App() {
     const tg = (window as any).Telegram?.WebApp
     if (tg?.initData) {
       await tryTelegramLogin()
-    } else if (tg?.openTelegramLink) {
+    } else if (typeof window !== "undefined" && !!(window as any).Telegram?.WebApp) {
       tg.openTelegramLink("https://t.me/QuizAppBot/app")
+    } else {
+      try {
+        const res = await fetch("/api/auth/dev-login", { method: "POST" })
+        if (!res.ok) throw new Error()
+        const data = await res.json()
+        setToken(data.data.accessToken)
+        localStorage.setItem("refresh_token", data.data.refreshToken)
+        setUser(data.data.user)
+        setDisplayName(data.data.user.displayName)
+        setLanguage((data.data.user.languageCode as Lang) || "en")
+        await loadLibrary()
+        setScreen("library")
+      } catch {
+        alert("Dev login failed. Make sure the database is running.")
+      }
     }
   }
 
-  function openQuiz(q: Quiz) {
+  async function openQuiz(q: Quiz) {
+    if (!q.questions?.length) {
+      try {
+        const res = await fetchQuiz(q.id)
+        q = { ...q, questions: ((res.data as any)?.questions ?? []).map((x: any, i: number) => ({ ...x, id: x.id || crypto.randomUUID(), order: i, explanation: x.explanation ?? undefined })) }
+      } catch {}
+    }
     setSelectedQuiz(q); setCurrentIdx(0); setAnswers({}); setSubmitted(new Set())
     setSkipped(new Set()); setShowFeedback(false); setSelectedOpt(null); setResults(null); setRetryIds(new Set())
     go("overview")
@@ -231,9 +268,12 @@ function App() {
     if (!quiz) return
     try {
       const result = await startSession(quiz.id, "practice")
-      const sData = result.data as SessionInfo
-      setSessionId(sData.id)
+      const sData = result.data as SessionData
+      setSessionId(sData.session.id)
       setSessionMode("practice")
+      if (sData.questions.length > 0) {
+        setSelectedQuiz(prev => prev ? { ...prev, questions: sData.questions.map(q => ({ ...q, explanation: q.explanation ?? undefined })) } : prev)
+      }
       setCurrentIdx(0); setAnswers({}); setSubmitted(new Set()); setSkipped(new Set())
       setShowFeedback(false); setSelectedOpt(null); go("practice")
     } catch (err) {
@@ -245,11 +285,14 @@ function App() {
     if (!quiz) return
     try {
       const result = await startSession(quiz.id, "exam")
-      const sData = result.data as SessionInfo
-      setSessionId(sData.id)
+      const sData = result.data as SessionData
+      setSessionId(sData.session.id)
       setSessionMode("exam")
+      if (sData.questions.length > 0) {
+        setSelectedQuiz(prev => prev ? { ...prev, questions: sData.questions.map(q => ({ ...q, explanation: q.explanation ?? undefined })) } : prev)
+      }
       setCurrentIdx(0); setAnswers({}); setSubmitted(new Set()); setSkipped(new Set())
-      setShowFeedback(false); setSelectedOpt(null); setExamTimeLeft(allQ.length * 60); go("exam")
+      setShowFeedback(false); setSelectedOpt(null); setExamTimeLeft((sData.questions.length || quiz.questionCount) * 60); go("exam")
     } catch (err) {
       alert(err instanceof Error ? err.message : "Failed to start exam")
     }
@@ -337,20 +380,22 @@ function App() {
     openQuiz(newQ)
   }
 
-  async function generateWithAI(title: string, description: string, folderId: string | null) {
+  async function generateWithAI(title: string, description: string, folderId: string | null, clarificationAnswer?: string) {
     setGenerating(true)
     try {
-      const res = await fetch("/api/ai/generate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${localStorage.getItem("access_token")}` },
-        body: JSON.stringify({ topic: title, description, folderId }),
-      })
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({ error: { message: "Failed to generate" } }))
-        throw new Error(err.error?.message || "Generation failed")
+      const result = await generateAIQuiz({ topic: title, description, folderId, clarificationAnswer })
+      const data = result as any
+      if (data.data?.clarificationNeeded) {
+        setGenerating(false)
+        setClarificationQuestion(data.data.clarificationNeeded)
+        setPendingGeneration({ title, description, folderId })
+        return
       }
-      const data = await res.json()
-      const quiz = data.data as Quiz
+      const quiz = data.data?.quiz
+      if (!quiz) throw new Error("No quiz data in response")
+      if (data.data.questions) {
+        quiz.questions = data.data.questions.map((q: any, i: number) => ({ ...q, id: crypto.randomUUID(), order: i }))
+      }
       setQuizzes(p => [...p, quiz])
       setShowAddModal(false)
       setGenerating(false)
@@ -359,6 +404,13 @@ function App() {
       setGenerating(false)
       alert(err instanceof Error ? err.message : "Failed to generate quiz")
     }
+  }
+
+  function handleClarify(answer: string) {
+    if (!pendingGeneration) return
+    setClarificationQuestion(null)
+    setPendingGeneration(null)
+    generateWithAI(pendingGeneration.title, pendingGeneration.description, pendingGeneration.folderId, answer)
   }
 
   async function handleUpload(e: React.ChangeEvent<HTMLInputElement>) {
@@ -468,7 +520,7 @@ function App() {
           <Logo size={64} className="mx-auto mb-6" />
           <h1 className="text-[44px] sm:text-hero-display font-semibold leading-[1.05] tracking-[-2px] text-on-dark mb-4">{t("appName")}</h1>
           <p className="text-subtitle text-on-dark/80 mb-10 leading-relaxed">
-            {isTelegram ? t("loginSubtitle") : "Open this app from Telegram to get started."}
+            {isTelegram ? t("loginSubtitle") : "Continue as a test user to explore the app."}
           </p>
           <div className="flex flex-col items-center justify-center gap-3">
             <button onClick={doLogin} className="btn-accent-green min-w-[200px]">{t("loginButton")}</button>
@@ -579,7 +631,7 @@ function App() {
             ))}
           </div>
         </div>
-        <AddQuizModal open={showAddModal} folders={folders} onAdd={generateWithAI} onAddFolder={addFolder} onClose={() => setShowAddModal(false)} t={t} generating={generating} />
+        <AddQuizModal open={showAddModal || !!clarificationQuestion} folders={folders} onAdd={generateWithAI} onAddFolder={addFolder} onClose={() => { setShowAddModal(false); setClarificationQuestion(null); setPendingGeneration(null) }} t={t} generating={generating} clarificationQuestion={clarificationQuestion} onClarify={handleClarify} />
         {showAdminPassword && (
           <div className="fixed inset-0 flex items-center justify-center z-50 px-4 animate-fade-in" style={{ backgroundColor: "rgba(0,0,0,0.5)" }}>
             <div className="card-base max-w-xs w-full p-6 animate-scale-in">
@@ -969,51 +1021,22 @@ function App() {
   }
 
   if (screen === "admin") {
-    const [botStatus, setBotStatus] = useState("checking")
-    const [config, setConfig] = useState<Record<string, Record<string, string>> | null>(null)
-    const [dirty, setDirty] = useState<Record<string, string>>({})
-    const [saving, setSaving] = useState(false)
-    const [saved, setSaved] = useState(false)
-
-    useEffect(() => {
-      Promise.all([
-        fetch("/api/admin/bot").then(r => r.json()),
-        fetch("/api/admin/config").then(r => r.json()),
-      ]).then(([bot, cfg]) => {
-        setBotStatus(bot.data.status)
-        setConfig(cfg.data)
-      }).catch(() => setBotStatus("unknown"))
-    }, [])
-
-    function setField(section: string, key: string, val: string) {
-      setDirty(p => ({ ...p, [`${section}.${key}`]: val }))
+    function setField(key: string, val: string) {
+      setDirty(p => ({ ...p, [key]: val }))
       setSaved(false)
     }
 
     async function saveConfig() {
       setSaving(true)
-      const payload: Record<string, Record<string, string>> = {}
-      for (const [path, val] of Object.entries(dirty)) {
-        const [section, key] = path.split(".")
-        if (!payload[section]) payload[section] = {}
-        payload[section][key] = val
-      }
       try {
         const res = await fetch("/api/admin/config", {
           method: "POST", headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ password: "2312", ...payload }),
+          body: JSON.stringify({ password: "2312", ...dirty }),
         })
         if (res.ok) {
           setSaved(true)
+          setCfg(p => p ? { ...p, ...dirty } : p)
           setDirty({})
-          setConfig(p => {
-            if (!p) return p
-            const next = { ...p }
-            for (const [section, keys] of Object.entries(payload)) {
-              next[section] = { ...next[section], ...keys }
-            }
-            return next
-          })
         }
       } catch {}
       setSaving(false)
@@ -1031,70 +1054,37 @@ function App() {
           <div>
             <p className="micro-uppercase text-steel mb-3">Configuration</p>
             <div className="card-base p-4 space-y-4">
-              <p className="text-caption text-muted">Database</p>
               <div>
-                <label className="text-body-sm font-medium text-ink block mb-1">DATABASE_URL</label>
-                <input value={dirty["web.DATABASE_URL"] ?? config?.web?.DATABASE_URL ?? ""} onChange={e => setField("web", "DATABASE_URL", e.target.value)} className="text-input font-mono text-sm" placeholder="postgres://..." />
-              </div>
-
-              <div className="hairline" />
-
-              <p className="text-caption text-muted">Auth & Telegram</p>
-              <div>
-                <label className="text-body-sm font-medium text-ink block mb-1">JWT_SECRET</label>
-                <input value={dirty["web.JWT_SECRET"] ?? config?.web?.JWT_SECRET ?? ""} onChange={e => setField("web", "JWT_SECRET", e.target.value)} className="text-input font-mono text-sm" placeholder="your-jwt-secret" />
-              </div>
-              <div>
-                <label className="text-body-sm font-medium text-ink block mb-1">TELEGRAM_BOT_TOKEN (Web)</label>
-                <input value={dirty["web.TELEGRAM_BOT_TOKEN"] ?? config?.web?.TELEGRAM_BOT_TOKEN ?? ""} onChange={e => setField("web", "TELEGRAM_BOT_TOKEN", e.target.value)} className="text-input font-mono text-sm" placeholder="used to verify Telegram login" />
+                <label className="text-body-sm font-medium text-ink block mb-1">TELEGRAM_BOT_TOKEN</label>
+                <input value={dirty["TELEGRAM_BOT_TOKEN"] ?? cfg?.TELEGRAM_BOT_TOKEN ?? ""} onChange={e => setField("TELEGRAM_BOT_TOKEN", e.target.value)} className="text-input font-mono text-sm" placeholder="Telegram bot token" />
               </div>
               <div>
                 <label className="text-body-sm font-medium text-ink block mb-1">APP_URL</label>
-                <input value={dirty["web.APP_URL"] ?? config?.web?.APP_URL ?? ""} onChange={e => setField("web", "APP_URL", e.target.value)} className="text-input text-sm" placeholder="https://yourdomain.com" />
-              </div>
-
-              <div className="hairline" />
-
-              <p className="text-caption text-muted">AI (OpenRouter)</p>
-              <div>
-                <label className="text-body-sm font-medium text-ink block mb-1">OPENROUTER_API_KEY</label>
-                <input value={dirty["web.OPENROUTER_API_KEY"] ?? config?.web?.OPENROUTER_API_KEY ?? ""} onChange={e => setField("web", "OPENROUTER_API_KEY", e.target.value)} className="text-input font-mono text-sm" placeholder="sk-or-..." />
-              </div>
-
-              <div className="hairline" />
-
-              <p className="text-caption text-muted">File Storage (Cloudflare R2)</p>
-              <div>
-                <label className="text-body-sm font-medium text-ink block mb-1">R2_ENDPOINT</label>
-                <input value={dirty["web.R2_ENDPOINT"] ?? config?.web?.R2_ENDPOINT ?? ""} onChange={e => setField("web", "R2_ENDPOINT", e.target.value)} className="text-input text-sm" placeholder="https://..." />
+                <input value={dirty["APP_URL"] ?? cfg?.APP_URL ?? ""} onChange={e => setField("APP_URL", e.target.value)} className="text-input text-sm" placeholder="https://yourdomain.com" />
               </div>
               <div>
-                <label className="text-body-sm font-medium text-ink block mb-1">R2_ACCESS_KEY</label>
-                <input value={dirty["web.R2_ACCESS_KEY"] ?? config?.web?.R2_ACCESS_KEY ?? ""} onChange={e => setField("web", "R2_ACCESS_KEY", e.target.value)} className="text-input font-mono text-sm" />
-              </div>
-              <div>
-                <label className="text-body-sm font-medium text-ink block mb-1">R2_SECRET_KEY</label>
-                <input value={dirty["web.R2_SECRET_KEY"] ?? config?.web?.R2_SECRET_KEY ?? ""} onChange={e => setField("web", "R2_SECRET_KEY", e.target.value)} className="text-input font-mono text-sm" />
-              </div>
-              <div>
-                <label className="text-body-sm font-medium text-ink block mb-1">R2_BUCKET</label>
-                <input value={dirty["web.R2_BUCKET"] ?? config?.web?.R2_BUCKET ?? ""} onChange={e => setField("web", "R2_BUCKET", e.target.value)} className="text-input text-sm" placeholder="quiz-app-files" />
-              </div>
-
-              <div className="hairline" />
-
-              <p className="text-caption text-muted">Bot</p>
-              <div>
-                <label className="text-body-sm font-medium text-ink block mb-1">BOT_TOKEN</label>
-                <input value={dirty["bot.BOT_TOKEN"] ?? config?.bot?.BOT_TOKEN ?? ""} onChange={e => setField("bot", "BOT_TOKEN", e.target.value)} className="text-input font-mono text-sm" placeholder="Telegram bot token" />
-              </div>
-              <div>
-                <label className="text-body-sm font-medium text-ink block mb-1">Bot DATABASE_URL</label>
-                <input value={dirty["bot.DATABASE_URL"] ?? config?.bot?.DATABASE_URL ?? ""} onChange={e => setField("bot", "DATABASE_URL", e.target.value)} className="text-input font-mono text-sm" placeholder="postgres://..." />
-              </div>
-              <div>
-                <label className="text-body-sm font-medium text-ink block mb-1">Bot WEB_APP_URL</label>
-                <input value={dirty["bot.WEB_APP_URL"] ?? config?.bot?.WEB_APP_URL ?? ""} onChange={e => setField("bot", "WEB_APP_URL", e.target.value)} className="text-input text-sm" placeholder="https://t.me/YourBot/app" />
+                <label className="text-body-sm font-medium text-ink block mb-1">Fallback API Keys</label>
+                {(() => {
+                  const raw = dirty["OPENROUTER_API_KEYS"] ?? cfg?.OPENROUTER_API_KEYS ?? ""
+                  const keys = raw ? raw.split(",") : [""]
+                  return keys.map((k, i) => (
+                    <div key={`ak-${k || i}-${i}`} className="flex gap-2 mb-2">
+                      <input value={k} onChange={e => {
+                        const updated = [...keys]
+                        updated[i] = e.target.value
+                        setField("OPENROUTER_API_KEYS", updated.join(","))
+                      }} className="text-input font-mono text-sm flex-1" placeholder={`sk-or-... (key ${i + 1})`} />
+                      <button onClick={() => {
+                        const updated = keys.filter((_, j) => j !== i)
+                        setField("OPENROUTER_API_KEYS", updated.join(","))
+                      }} className="text-caption text-brand-error hover:underline shrink-0">Remove</button>
+                    </div>
+                  ))
+                })()}
+                <button onClick={() => {
+                  const current = dirty["OPENROUTER_API_KEYS"] ?? cfg?.OPENROUTER_API_KEYS ?? ""
+                  setField("OPENROUTER_API_KEYS", current ? current + "," : "")
+                }} className="text-caption text-brand-blue hover:underline">+ Add key</button>
               </div>
 
               <div className="flex items-center gap-2 pt-2">
@@ -1167,15 +1157,17 @@ function App() {
   return null
 }
 
-function AddQuizModal({ open, folders, onAdd, onAddFolder, onClose, t, generating }: {
+function AddQuizModal({ open, folders, onAdd, onAddFolder, onClose, t, generating, clarificationQuestion, onClarify }: {
   open: boolean; folders: Folder[]; onAdd: (title: string, description: string, folderId: string | null) => void
   onAddFolder: (name: string) => void | Promise<string>; onClose: () => void; t: (key: string) => string; generating?: boolean
+  clarificationQuestion?: string | null; onClarify?: (answer: string) => void
 }) {
   const [title, setTitle] = useState("")
   const [description, setDescription] = useState("")
   const [folderId, setFolderId] = useState<string | null>(null)
   const [showNewFolder, setShowNewFolder] = useState(false)
   const [newFolderName, setNewFolderName] = useState("")
+  const [clarifyAnswer, setClarifyAnswer] = useState("")
 
   if (!open) return null
 
@@ -1191,6 +1183,24 @@ function AddQuizModal({ open, folders, onAdd, onAddFolder, onClose, t, generatin
     if (id) setFolderId(id)
     setShowNewFolder(false)
     setNewFolderName("")
+  }
+
+  if (clarificationQuestion) {
+    return (
+      <div className="fixed inset-0 flex items-center justify-center z-50 px-4 animate-fade-in" style={{ backgroundColor: "rgba(0,0,0,0.5)" }}>
+        <div className="card-base max-w-sm w-full p-6 animate-scale-in">
+          <p className="text-body-md-medium text-ink mb-1">Clarification Needed</p>
+          <p className="text-body-sm text-steel mb-4">{clarificationQuestion}</p>
+          <div className="space-y-3 mb-5">
+            <input value={clarifyAnswer} onChange={e => setClarifyAnswer(e.target.value)} placeholder="Your answer…" className="text-input" autoFocus onKeyDown={e => { if (e.key === "Enter" && clarifyAnswer.trim()) onClarify?.(clarifyAnswer.trim()) }} />
+          </div>
+          <div className="flex gap-2.5">
+            <button onClick={onClose} className="btn-secondary flex-1">{t("cancel")}</button>
+            <button onClick={() => onClarify?.(clarifyAnswer.trim())} disabled={!clarifyAnswer.trim()} className="btn-primary flex-1">Submit</button>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (
