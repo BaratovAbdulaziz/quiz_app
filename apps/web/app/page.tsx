@@ -8,7 +8,7 @@ import en from "@/i18n/en.json"
 import uz from "@/i18n/uz.json"
 import ru from "@/i18n/ru.json"
 import {
-  setToken, loginWithTelegram, fetchMe, fetchQuizzes, fetchQuiz,
+  setToken, loginWithTelegram, fetchMe, fetchQuizzes,
   fetchFolders, createFolder, startSession, submitAnswer, skipQuestion,
   completeSession, generateShareLink, updateSettings, deleteAccount,
 } from "@/lib/api-client"
@@ -213,7 +213,12 @@ function App() {
   function go(s: Screen) { setScreen(s) }
 
   async function doLogin() {
-    await tryTelegramLogin()
+    const tg = (window as any).Telegram?.WebApp
+    if (tg?.initData) {
+      await tryTelegramLogin()
+    } else if (tg?.openTelegramLink) {
+      tg.openTelegramLink("https://t.me/QuizAppBot/app")
+    }
   }
 
   function openQuiz(q: Quiz) {
@@ -456,17 +461,17 @@ function App() {
   }
 
   if (!user) {
+    const isTelegram = typeof window !== "undefined" && !!(window as any).Telegram?.WebApp
     return (
       <div key="login" className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-hero-sky-from to-hero-sky-to px-6 py-hero animate-slide-up">
         <div className="max-w-md w-full text-center">
           <Logo size={64} className="mx-auto mb-6" />
           <h1 className="text-[44px] sm:text-hero-display font-semibold leading-[1.05] tracking-[-2px] text-on-dark mb-4">{t("appName")}</h1>
           <p className="text-subtitle text-on-dark/80 mb-10 leading-relaxed">
-            {t("loginSubtitle")}
+            {isTelegram ? t("loginSubtitle") : "Open this app from Telegram to get started."}
           </p>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+          <div className="flex flex-col items-center justify-center gap-3">
             <button onClick={doLogin} className="btn-accent-green min-w-[200px]">{t("loginButton")}</button>
-            <button className="btn-secondary border-on-dark/20 text-on-dark min-w-[140px]">{t("learnMore")}</button>
           </div>
         </div>
       </div>

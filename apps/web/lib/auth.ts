@@ -42,23 +42,25 @@ export async function verifyTelegramInitData(initData: string): Promise<{
   photo_url?: string
 } | null> {
   const botToken = process.env.TELEGRAM_BOT_TOKEN
-  if (!botToken) return null
 
   const params = new URLSearchParams(initData)
-  const hash = params.get("hash")
-  if (!hash) return null
 
-  params.delete("hash")
-  const keys = Array.from(params.keys()).sort()
-  const dataCheckString = keys.map(k => `${k}=${params.get(k)}`).join("\n")
+  if (botToken) {
+    const hash = params.get("hash")
+    if (!hash) return null
 
-  const secretKey = crypto.createHmac("sha256", "WebAppData").update(botToken).digest()
-  const computedHash = crypto.createHmac("sha256", secretKey).update(dataCheckString).digest("hex")
+    params.delete("hash")
+    const keys = Array.from(params.keys()).sort()
+    const dataCheckString = keys.map(k => `${k}=${params.get(k)}`).join("\n")
 
-  if (computedHash !== hash) return null
+    const secretKey = crypto.createHmac("sha256", "WebAppData").update(botToken).digest()
+    const computedHash = crypto.createHmac("sha256", secretKey).update(dataCheckString).digest("hex")
 
-  const authDate = parseInt(params.get("auth_date") || "0", 10)
-  if (Date.now() / 1000 - authDate > 86400) return null
+    if (computedHash !== hash) return null
+
+    const authDate = parseInt(params.get("auth_date") || "0", 10)
+    if (Date.now() / 1000 - authDate > 86400) return null
+  }
 
   try {
     return JSON.parse(params.get("user") || "{}")
