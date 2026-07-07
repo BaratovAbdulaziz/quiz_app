@@ -8,7 +8,7 @@ echo "=== Deploying QuizFlow to $DOMAIN ==="
 
 cd "$APP_DIR"
 
-git pull origin master
+git pull origin main
 
 echo "--- Installing dependencies ---"
 npm ci
