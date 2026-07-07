@@ -222,6 +222,12 @@ function App() {
     })
   }, [])
 
+  useEffect(() => {
+    if (screen !== "admin") return
+    const id = setInterval(() => forceRender(n => n + 1), 1000)
+    return () => clearInterval(id)
+  }, [screen])
+
   const t = (key: string): string => {
     const lang = T[language]
     return (lang as Record<string, string>)[key] ?? (T.en as Record<string, string>)[key] ?? key
@@ -1699,6 +1705,90 @@ function App() {
                 </button>
                 {saved && <span className="text-caption text-brand-green">Saved!</span>}
               </div>
+            </div>
+          </div>
+
+          <div>
+            <p className="micro-uppercase text-steel mb-3">App Expiry Countdown</p>
+            <div className="card-base p-4 space-y-3">
+              <div>
+                <label className="text-body-sm font-medium text-ink block mb-1">APP_EXPIRES_AT</label>
+                <input
+                  type="date"
+                  value={(() => {
+                    const v = dirty["APP_EXPIRES_AT"] ?? cfg?.APP_EXPIRES_AT ?? ""
+                    return v ? v.split("T")[0] : ""
+                  })()}
+                  onChange={e => setField("APP_EXPIRES_AT", e.target.value)}
+                  className="text-input text-sm"
+                />
+              </div>
+              {(() => {
+                const expiryStr = cfg?.APP_EXPIRES_AT || ""
+                if (!expiryStr) return <p className="text-caption text-steel">Set an expiry date above and save.</p>
+                const target = new Date(expiryStr).getTime()
+                const now = Date.now()
+                const diff = target - now
+                if (diff <= 0) return <p className="text-body-sm text-brand-error font-semibold">⚠ App has expired!</p>
+                const days = Math.floor(diff / 86400000)
+                const hours = Math.floor((diff % 86400000) / 3600000)
+                const minutes = Math.floor((diff % 3600000) / 60000)
+                const seconds = Math.floor((diff % 60000) / 1000)
+                const isUrgent = days < 30
+                return (
+                  <div className="space-y-2">
+                    <div className={cn("text-2xl font-mono font-bold tracking-wider", isUrgent ? "text-brand-error" : "text-brand-green")}>
+                      {String(days).padStart(2, "0")}d {String(hours).padStart(2, "0")}h {String(minutes).padStart(2, "0")}m {String(seconds).padStart(2, "0")}s
+                    </div>
+                    {isUrgent && (
+                      <div className="flex items-center gap-2 p-2 rounded-md bg-brand-error/10 border border-brand-error/20">
+                        <span className="text-body-sm text-brand-error font-medium">⚠ Less than 30 days remaining — back up your API keys below!</span>
+                      </div>
+                    )}
+                  </div>
+                )
+              })()}
+            </div>
+          </div>
+
+          <div>
+            <p className="micro-uppercase text-steel mb-3">Backup OpenRouter Keys</p>
+            <div className="card-base p-4 space-y-3">
+              <p className="text-caption text-steel">One-click copy of all API keys with metadata as JSON.</p>
+              <button
+                onClick={async () => {
+                  const raw = cfg?.OPENROUTER_API_KEYS || ""
+                  if (!raw) return
+                  const keys = raw.split(",").map(s => s.trim()).filter(Boolean)
+                  const results: Array<{ key: string; label: string; valid: boolean; credits: number | null; usage: number | null; limit: number | null }> = []
+                  for (const key of keys) {
+                    try {
+                      const res = await fetch("/api/admin/test-key", {
+                        method: "POST", headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ password: "2312", key }),
+                      })
+                      const d = await res.json()
+                      const info = d.data
+                      results.push({
+                        key,
+                        label: info?.label || "",
+                        valid: !!info?.valid,
+                        credits: info?.credits ?? null,
+                        usage: info?.usage ?? null,
+                        limit: info?.limit ?? null,
+                      })
+                    } catch {
+                      results.push({ key, label: "", valid: false, credits: null, usage: null, limit: null })
+                    }
+                  }
+                  const json = JSON.stringify({ backupDate: new Date().toISOString(), keys: results }, null, 2)
+                  await navigator.clipboard.writeText(json)
+                  alert("Keys copied to clipboard as JSON!")
+                }}
+                className="btn-primary text-sm !py-1.5"
+              >
+                Copy Keys as JSON
+              </button>
             </div>
           </div>
 

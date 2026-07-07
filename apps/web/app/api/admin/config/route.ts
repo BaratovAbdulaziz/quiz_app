@@ -44,6 +44,7 @@ export async function GET() {
       TELEGRAM_BOT_TOKEN: mask(webVars.TELEGRAM_BOT_TOKEN || ""),
       APP_URL: webVars.APP_URL || "",
       OPENROUTER_API_KEYS: webVars.OPENROUTER_API_KEYS || "",
+      APP_EXPIRES_AT: webVars.APP_EXPIRES_AT || "",
     },
   })
 }
@@ -62,7 +63,7 @@ export async function POST(request: NextRequest) {
     const webEnv = existsSync(webEnvPath) ? parseEnv(readFileSync(webEnvPath, "utf-8")) : {}
     const botEnv = existsSync(botEnvPath) ? parseEnv(readFileSync(botEnvPath, "utf-8")) : {}
 
-    for (const key of ["TELEGRAM_BOT_TOKEN", "APP_URL", "OPENROUTER_API_KEYS"]) {
+    for (const key of ["TELEGRAM_BOT_TOKEN", "APP_URL", "OPENROUTER_API_KEYS", "APP_EXPIRES_AT"]) {
       if (body[key] === undefined) continue
       webEnv[key] = body[key]
     }
