@@ -18,6 +18,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
         <script src="https://telegram.org/js/telegram-webapp.js" async />
         <script
           dangerouslySetInnerHTML={{
@@ -26,13 +29,17 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
       </head>
       <body className="font-sans bg-canvas text-ink antialiased transition-colors duration-200" suppressHydrationWarning>
-        <ClerkProvider
-          publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY!}
-          signInUrl={process.env.NEXT_PUBLIC_CLERK_SIGN_IN_URL || "/"}
-          signUpUrl={process.env.NEXT_PUBLIC_CLERK_SIGN_UP_URL || "/"}
-        >
-          {children}
-        </ClerkProvider>
+        {process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY ? (
+          <ClerkProvider
+            publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
+            signInUrl={process.env.NEXT_PUBLIC_CLERK_SIGN_IN_URL || "/"}
+            signUpUrl={process.env.NEXT_PUBLIC_CLERK_SIGN_UP_URL || "/"}
+          >
+            {children}
+          </ClerkProvider>
+        ) : (
+          children
+        )}
       </body>
     </html>
   )
