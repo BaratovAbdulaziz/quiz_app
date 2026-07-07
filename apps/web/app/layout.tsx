@@ -1,6 +1,8 @@
 import type { Metadata } from "next"
 import "./globals.css"
-import AuthProvider from "@/components/auth/AuthProvider"
+import { ClerkProvider } from "@clerk/nextjs"
+
+export const dynamic = "force-dynamic"
 
 export const metadata: Metadata = {
   title: "QuizFlow",
@@ -24,7 +26,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
       </head>
       <body className="font-sans bg-canvas text-ink antialiased transition-colors duration-200" suppressHydrationWarning>
-        <AuthProvider>{children}</AuthProvider>
+        <ClerkProvider
+          publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY!}
+          signInUrl={process.env.NEXT_PUBLIC_CLERK_SIGN_IN_URL || "/"}
+          signUpUrl={process.env.NEXT_PUBLIC_CLERK_SIGN_UP_URL || "/"}
+        >
+          {children}
+        </ClerkProvider>
       </body>
     </html>
   )
