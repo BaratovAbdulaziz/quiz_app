@@ -1,6 +1,7 @@
 import type { Metadata } from "next"
-import "./globals.css"
 import { ClerkProvider } from "@clerk/nextjs"
+import fs from "fs"
+import path from "path"
 
 export const dynamic = "force-dynamic"
 
@@ -15,9 +16,11 @@ export const metadata: Metadata = {
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
+  const cssContent = fs.readFileSync(path.join(process.cwd(), "app/globals.css"), "utf-8")
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
+        <style dangerouslySetInnerHTML={{ __html: cssContent }} />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
