@@ -6,7 +6,7 @@ import { withAuth } from "@/middleware/auth"
 import { nanoid } from "nanoid"
 
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const auth = withAuth(request)
+  const auth = await withAuth(request)
   if (auth instanceof NextResponse) return auth
 
   const { id } = await params
@@ -28,7 +28,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 }
 
 export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const auth = withAuth(request)
+  const auth = await withAuth(request)
   if (auth instanceof NextResponse) return auth
 
   const { id } = await params

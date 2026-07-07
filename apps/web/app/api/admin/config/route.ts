@@ -7,14 +7,12 @@ const ADMIN_PASSWORD = "2312"
 function findProjectRoot(start: string): string {
   let dir = resolve(start)
   for (let i = 0; i < 10; i++) {
-    if (existsSync(join(dir, "turbo.json")) || existsSync(join(dir, "package.json"))) {
-      return dir
-    }
+    if (existsSync(join(dir, "turbo.json"))) return dir
     const parent = dirname(dir)
     if (parent === dir) break
     dir = parent
   }
-  return start
+  return resolve(start, "..")
 }
 
 function parseEnv(content: string): Record<string, string> {
@@ -38,29 +36,14 @@ function mask(val: string): string {
 export async function GET() {
   const projectRoot = findProjectRoot(process.cwd())
   const webEnvPath = join(projectRoot, "apps", "web", ".env")
-  const botEnvPath = join(projectRoot, "apps", "bot", ".env")
 
   const webVars = existsSync(webEnvPath) ? parseEnv(readFileSync(webEnvPath, "utf-8")) : {}
-  const botVars = existsSync(botEnvPath) ? parseEnv(readFileSync(botEnvPath, "utf-8")) : {}
 
   return NextResponse.json({
     data: {
-      web: {
-        DATABASE_URL: mask(webVars.DATABASE_URL || ""),
-        JWT_SECRET: mask(webVars.JWT_SECRET || ""),
-        TELEGRAM_BOT_TOKEN: mask(webVars.TELEGRAM_BOT_TOKEN || ""),
-        OPENROUTER_API_KEY: mask(webVars.OPENROUTER_API_KEY || ""),
-        R2_ENDPOINT: mask(webVars.R2_ENDPOINT || ""),
-        R2_ACCESS_KEY: mask(webVars.R2_ACCESS_KEY || ""),
-        R2_SECRET_KEY: mask(webVars.R2_SECRET_KEY || ""),
-        R2_BUCKET: webVars.R2_BUCKET || "",
-        APP_URL: webVars.APP_URL || "",
-      },
-      bot: {
-        BOT_TOKEN: mask(botVars.BOT_TOKEN || ""),
-        DATABASE_URL: mask(botVars.DATABASE_URL || ""),
-        WEB_APP_URL: botVars.WEB_APP_URL || "",
-      },
+      TELEGRAM_BOT_TOKEN: mask(webVars.TELEGRAM_BOT_TOKEN || ""),
+      APP_URL: webVars.APP_URL || "",
+      OPENROUTER_API_KEYS: webVars.OPENROUTER_API_KEYS || "",
     },
   })
 }
@@ -76,36 +59,31 @@ export async function POST(request: NextRequest) {
     const webEnvPath = join(projectRoot, "apps", "web", ".env")
     const botEnvPath = join(projectRoot, "apps", "bot", ".env")
 
-    const allowedWeb = ["DATABASE_URL", "JWT_SECRET", "TELEGRAM_BOT_TOKEN", "OPENROUTER_API_KEY", "R2_ENDPOINT", "R2_ACCESS_KEY", "R2_SECRET_KEY", "R2_BUCKET", "APP_URL"]
-    const allowedBot = ["BOT_TOKEN", "DATABASE_URL", "WEB_APP_URL"]
+    const webEnv = existsSync(webEnvPath) ? parseEnv(readFileSync(webEnvPath, "utf-8")) : {}
+    const botEnv = existsSync(botEnvPath) ? parseEnv(readFileSync(botEnvPath, "utf-8")) : {}
 
-    if (body.web) {
-      const existing = existsSync(webEnvPath) ? parseEnv(readFileSync(webEnvPath, "utf-8")) : {}
-      for (const key of allowedWeb) {
-        if (body.web[key] !== undefined) {
-          existing[key] = body.web[key]
-        }
-      }
-      const content = Object.entries(existing)
+    for (const key of ["TELEGRAM_BOT_TOKEN", "APP_URL", "OPENROUTER_API_KEYS"]) {
+      if (body[key] === undefined) continue
+      webEnv[key] = body[key]
+    }
+
+    if (body.TELEGRAM_BOT_TOKEN !== undefined) {
+      botEnv.BOT_TOKEN = body.TELEGRAM_BOT_TOKEN
+    }
+    if (body.APP_URL !== undefined) {
+      botEnv.API_BASE_URL = body.APP_URL
+    }
+
+    const writeEnv = (path: string, vars: Record<string, string>) => {
+      const content = Object.entries(vars)
         .filter(([, v]) => v)
         .map(([k, v]) => `${k}=${v}`)
         .join("\n") + "\n"
-      writeFileSync(webEnvPath, content, "utf-8")
+      writeFileSync(path, content, "utf-8")
     }
 
-    if (body.bot) {
-      const existing = existsSync(botEnvPath) ? parseEnv(readFileSync(botEnvPath, "utf-8")) : {}
-      for (const key of allowedBot) {
-        if (body.bot[key] !== undefined) {
-          existing[key] = body.bot[key]
-        }
-      }
-      const content = Object.entries(existing)
-        .filter(([, v]) => v)
-        .map(([k, v]) => `${k}=${v}`)
-        .join("\n") + "\n"
-      writeFileSync(botEnvPath, content, "utf-8")
-    }
+    writeEnv(webEnvPath, webEnv)
+    writeEnv(botEnvPath, botEnv)
 
     return NextResponse.json({ data: { success: true } })
   } catch (e: unknown) {

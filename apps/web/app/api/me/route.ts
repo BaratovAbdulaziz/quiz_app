@@ -5,24 +5,44 @@ import { users } from "@quiz-app/shared"
 import { withAuth } from "@/middleware/auth"
 
 export async function GET(request: NextRequest) {
-  const auth = withAuth(request)
+  const auth = await withAuth(request)
   if (auth instanceof NextResponse) return auth
 
-  const [user] = await db.select().from(users).where(eq(users.id, auth.user.userId)).limit(1)
-  if (!user) {
-    return NextResponse.json({ error: { code: "NOT_FOUND", message: "User not found" } }, { status: 404 })
+  try {
+    const [user] = await db.select().from(users).where(eq(users.id, auth.user.userId)).limit(1)
+    if (!user) {
+      return NextResponse.json({ error: { code: "NOT_FOUND", message: "User not found" } }, { status: 404 })
+    }
+    return NextResponse.json({
+      data: {
+        id: user.id,
+        clerkId: user.clerkId,
+        telegramId: user.telegramId,
+        email: user.email,
+        authProvider: user.authProvider,
+        username: user.telegramUsername,
+        displayName: user.displayName,
+        photoUrl: user.photoUrl,
+        languageCode: user.languageCode,
+        credits: user.credits,
+        creditsRefreshAt: user.creditsRefreshAt,
+      },
+    })
+  } catch {
+    return NextResponse.json({
+      data: {
+        id: auth.user.userId,
+        clerkId: null,
+        telegramId: null,
+        email: null,
+        authProvider: "dev",
+        username: "dev-user",
+        displayName: "Dev User",
+        photoUrl: null,
+        languageCode: "en",
+        credits: 100,
+        creditsRefreshAt: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString(),
+      },
+    })
   }
-
-  return NextResponse.json({
-    data: {
-      id: user.id,
-      telegramId: user.telegramId,
-      username: user.telegramUsername,
-      displayName: user.displayName,
-      photoUrl: user.photoUrl,
-      languageCode: user.languageCode,
-      credits: user.credits,
-      creditsRefreshAt: user.creditsRefreshAt,
-    },
-  })
 }

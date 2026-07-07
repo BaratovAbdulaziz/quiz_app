@@ -5,7 +5,7 @@ import { users } from "@quiz-app/shared"
 import { withAuth } from "@/middleware/auth"
 
 export async function GET(request: NextRequest) {
-  const auth = withAuth(request)
+  const auth = await withAuth(request)
   if (auth instanceof NextResponse) return auth
 
   const [user] = await db.select().from(users).where(eq(users.id, auth.user.userId)).limit(1)

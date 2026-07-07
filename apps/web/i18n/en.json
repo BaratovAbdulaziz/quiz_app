@@ -1,5 +1,5 @@
 {
-  "appName": "Quiz App",
+  "appName": "QuizFlow",
   "loginSubtitle": "Upload PDFs or enter a topic. Generate quizzes. Practice and master any subject.",
   "loginButton": "Login with Telegram",
   "learnMore": "Learn more",
@@ -41,6 +41,7 @@
   "restartQuiz": "Restart Quiz",
   "backToLibrary": "Back to Library",
   "settings": "Settings",
+  "username": "Username",
   "displayName": "Display name",
   "darkTheme": "Dark theme",
   "language": "Language",
@@ -66,6 +67,7 @@
   "shareHint": "Anyone with this link can import a copy.",
   "copyLink": "Copy link",
   "copied": "Copied!",
+  "save": "Save",
   "close": "Close",
   "time": "Time",
   "minutes": "m",
@@ -86,5 +88,14 @@
   "hideJson": "Hide JSON",
   "noKeys": "No API keys yet",
   "keyAdded": "Key added",
-  "jsonExported": "JSON exported"
+  "jsonExported": "JSON exported",
+  "questions_per_quiz": "Questions per test:",
+  "select": "Select",
+  "cancelSelection": "Cancel",
+  "selected": "selected",
+  "moveTo": "Move to…",
+  "moveToFolder": "Move to folder",
+  "deleteSelected": "Delete",
+  "deleteSelectedConfirm": "Delete selected items?",
+  "deleteSelectedWarning": "This will permanently delete the selected quizzes and folders."
 }

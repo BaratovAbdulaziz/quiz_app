@@ -8,7 +8,7 @@ export const quizSourceEnum = pgEnum("quiz_source", ["uploaded_pdf", "ai_generat
 export const quizzes = pgTable("quizzes", {
   id: uuid("id").defaultRandom().primaryKey(),
   userId: uuid("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
-  folderId: uuid("folder_id").references(() => folders.id, { onDelete: "set null" }),
+  folderId: uuid("folder_id").references(() => folders.id, { onDelete: "cascade" }),
   title: text("title").notNull(),
   description: text("description"),
   source: quizSourceEnum("source").notNull().default("ai_generated"),

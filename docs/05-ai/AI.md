@@ -32,6 +32,15 @@ The AI never modifies user content unnecessarily. All content remains in its ori
 - Each chunk is processed independently with context from adjacent chunks.
 - Deduplication is applied after all chunks are processed.
 
+### JSON Repair
+
+AI models frequently return malformed JSON (trailing commas, single quotes instead of double, unquoted keys, unbalanced braces). The `repairJson()` function in `lib/openrouter.ts` handles these issues before parsing:
+- Strips markdown code fences
+- Extracts balanced JSON structure (first top-level object or array)
+- Removes trailing commas before `}` or `]`
+- Replaces single quotes with double quotes (outside strings)
+- Quotes unquoted object keys
+
 ### Validation Pipeline
 
 Each extracted question must pass these checks:

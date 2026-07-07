@@ -1,5 +1,5 @@
 {
-  "appName": "Тестовое приложение",
+  "appName": "QuizFlow",
   "loginSubtitle": "Загрузите PDF или введите тему. Создавайте тесты. Тренируйтесь и осваивайте любой предмет.",
   "loginButton": "Войти через Telegram",
   "learnMore": "Узнать больше",
@@ -41,6 +41,7 @@
   "restartQuiz": "Начать тест заново",
   "backToLibrary": "Назад в библиотеку",
   "settings": "Настройки",
+  "username": "Имя пользователя",
   "displayName": "Отображаемое имя",
   "darkTheme": "Тёмная тема",
   "language": "Язык",
@@ -66,6 +67,7 @@
   "shareHint": "Любой, у кого есть эта ссылка, может импортировать копию.",
   "copyLink": "Копировать ссылку",
   "copied": "Скопировано!",
+  "save": "Сохранить",
   "close": "Закрыть",
   "time": "Время",
   "minutes": "м",
@@ -86,5 +88,14 @@
   "hideJson": "Скрыть JSON",
   "noKeys": "Нет API ключей",
   "keyAdded": "Ключ добавлен",
-  "jsonExported": "JSON экспортирован"
+  "jsonExported": "JSON экспортирован",
+  "questions_per_quiz": "Вопросов на тест:",
+  "select": "Выбрать",
+  "cancelSelection": "Отмена",
+  "selected": "выбрано",
+  "moveTo": "Переместить…",
+  "moveToFolder": "Переместить в папку",
+  "deleteSelected": "Удалить",
+  "deleteSelectedConfirm": "Удалить выбранные элементы?",
+  "deleteSelectedWarning": "Это навсегда удалит выбранные тесты и папки."
 }

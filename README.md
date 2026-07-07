@@ -1,4 +1,4 @@
-# Quiz App
+# QuizFlow
 
 AI-powered study platform that transforms static PDFs and topics into interactive practice quizzes.
 

@@ -6,7 +6,7 @@ import { uploadFile } from "@/lib/r2"
 import { withAuth } from "@/middleware/auth"
 
 export async function POST(request: NextRequest) {
-  const auth = withAuth(request)
+  const auth = await withAuth(request)
   if (auth instanceof NextResponse) return auth
 
   try {
@@ -44,7 +44,8 @@ export async function POST(request: NextRequest) {
     }).returning()
 
     return NextResponse.json({ data: fileRecord }, { status: 201 })
-  } catch {
-    return NextResponse.json({ error: { code: "UPLOAD_FAILED", message: "File upload failed" } }, { status: 500 })
+  } catch (err) {
+    console.error("Upload error:", err)
+    return NextResponse.json({ error: { code: "UPLOAD_FAILED", message: err instanceof Error ? err.message : "File upload failed" } }, { status: 500 })
   }
 }

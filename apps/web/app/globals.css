@@ -52,6 +52,16 @@
   animation: slide-down 0.3s ease-out both;
 }
 
+@keyframes progress-bar {
+  0% { width: 10%; }
+  50% { width: 60%; }
+  100% { width: 90%; }
+}
+
+.animate-progress-bar {
+  animation: progress-bar 2s ease-in-out infinite;
+}
+
 .dark {
   --color-canvas: 10 10 10;
   --color-surface: 28 28 30;

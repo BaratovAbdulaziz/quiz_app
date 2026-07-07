@@ -1,10 +1,10 @@
 [project]
 name = "quiz-app-bot"
 version = "0.1.0"
-description = "Telegram bot for Quiz App notifications"
+description = "Telegram bot for QuizFlow"
 requires-python = ">=3.12"
 dependencies = [
     "aiogram>=3.10.0",
-    "asyncpg>=0.30.0",
     "python-dotenv>=1.0.0",
+    "httpx>=0.28.0",
 ]

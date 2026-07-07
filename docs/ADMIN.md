@@ -1,28 +1,52 @@
 # Admin Panel
 
-An admin panel is available for managing API keys. It is hidden and requires a secret access method.
+## Access
+
+From the library screen, type `/pathfinder` in the search bar. A password prompt appears (3 attempts). Enter password `2312` to enter the admin panel.
 
 ## Features
 
-- View all API keys with their provider and status (active/inactive)
-- Copy any API key to clipboard
-- Test API keys against their provider endpoint to check health (valid, invalid, exhausted, error)
-- Provider support: **OpenAI**, **Groq**, **OpenRouter**
-- Add new API keys with provider selection (manual entry or auto-generate with provider-specific prefix)
-- Toggle key status between active/inactive
-- Delete API keys
-- Export all keys as JSON with hashed values (SHA-256)
+### Configuration
+- View and edit `.env` variables: `TELEGRAM_BOT_TOKEN`, `APP_URL`, `OPENROUTER_API_KEYS` (comma-separated list with add/remove per key)
+- Save Configuration button persists changes to the server's `.env` file
 
-## Providers
+### Telegram Bot
+- View bot status (Running / Stopped / Checking...)
+- Start and Stop the bot via PM2
 
-| Provider    | Endpoint | Key Prefix |
-|-------------|----------|------------|
-| OpenAI      | `https://api.openai.com/v1/models` | `sk-` |
-| Groq        | `https://api.groq.com/openai/v1/models` | `gsk_` |
-| OpenRouter  | `https://openrouter.ai/api/v1/models` | `sk-or-` |
+### Users
+- Dropdown lists all non-test users with `displayName`, `@telegramUsername`, and `tokens` balance
+- Select a user to see their current token count
+- Add credits to any selected user
+- Test users (`is_test_user = 1`) are excluded from the list
+- Refresh button re-fetches the user list
 
-The Test button pings the provider's models endpoint with `Authorization: Bearer <key>`. A `200` response means healthy; `401`/`403` means invalid; `429`/`402` means exhausted/out of credits.
+### Test API
+- Input a topic and click Test to call the AI generation endpoint
+- Displays result: number of questions generated, clarification needed, or error message
+- Useful for quickly validating that the AI pipeline is working end-to-end
 
-## Access
+### Danger Zone
+- "Kill Site" button: runs `pm2 kill` and `rm -rf` on the project directory
+- Irreversible — use only in emergencies
 
-The admin panel can be accessed from the library screen using a hidden trigger. The trigger is intentionally undocumented to prevent casual access.
+## Schema
+
+All users have an `is_test_user` integer column (default 0). Set to `1` to exclude a user from the admin panel:
+
+```sql
+UPDATE users SET is_test_user = 1 WHERE telegram_username = 'my_test_bot';
+```
+
+## API
+
+| Method | Path | Purpose |
+|--------|------|---------|
+| GET | `/api/admin/users?password=2312` | List non-test users with tokens |
+| POST | `/api/admin/users` | Add credits to a user (`{ password, userId, credits }`) |
+| GET | `/api/admin/bot` | Check bot status |
+| POST | `/api/admin/bot` | Start/stop bot (`{ password, action: "start"|"stop" }`) |
+| GET | `/api/admin/config` | Read `.env` values (keys masked) |
+| POST | `/api/admin/config` | Write `.env` values |
+| GET | `/api/admin/kill` | Check if site is killed |
+| POST | `/api/admin/kill` | Kill site |

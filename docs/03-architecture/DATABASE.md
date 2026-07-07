@@ -13,6 +13,7 @@
 | id | UUID | Primary key |
 | telegram_id | bigint | Unique, from Telegram |
 | telegram_username | string | Nullable |
+| username | string | Nullable, unique, editable by user |
 | display_name | string | From Telegram |
 | credits | integer | Current AI credit balance |
 | credits_refresh_at | timestamp | When credits are next refreshed |

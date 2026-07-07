@@ -1,0 +1,13 @@
+{
+  "apps": [
+    {
+      "name": "quiz-app-bot",
+      "script": ".venv/bin/python",
+      "args": "-m src.bot",
+      "cwd": ".",
+      "watch": false,
+      "instances": 1,
+      "exec_mode": "fork"
+    }
+  ]
+}

@@ -5,7 +5,7 @@ import { quizzes, questions } from "@quiz-app/shared"
 import { withAuth } from "@/middleware/auth"
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const auth = withAuth(request)
+  const auth = await withAuth(request)
   if (auth instanceof NextResponse) return auth
 
   const { id } = await params

@@ -10,7 +10,7 @@ const REFRESH_TOKEN_EXPIRY = "30d"
 
 export interface AuthPayload {
   userId: string
-  telegramId: number
+  telegramId?: number
 }
 
 export function signAccessToken(payload: AuthPayload): string {
@@ -87,6 +87,7 @@ export async function upsertUser(tgUser: {
         displayName: tgUser.first_name || u.displayName,
         photoUrl: tgUser.photo_url || u.photoUrl,
         languageCode: tgUser.language_code || u.languageCode,
+        deletedAt: null,
       })
       .where(eq(users.id, u.id))
     return u
@@ -94,10 +95,46 @@ export async function upsertUser(tgUser: {
 
   const [created] = await db.insert(users).values({
     telegramId: tgUser.id,
+    authProvider: "telegram",
     telegramUsername: tgUser.username || null,
     displayName: tgUser.first_name,
     photoUrl: tgUser.photo_url || null,
     languageCode: tgUser.language_code || "en",
+    credits: 100,
+    creditsRefreshAt: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000),
+  }).returning()
+
+  return created
+}
+
+export async function upsertUserByClerk(clerkUser: {
+  clerkId: string
+  email: string | null
+  displayName: string
+  photoUrl: string | null
+}) {
+  const existing = await db.select().from(users).where(eq(users.clerkId, clerkUser.clerkId)).limit(1)
+
+  if (existing.length > 0) {
+    const u = existing[0]
+    await db.update(users)
+      .set({
+        email: clerkUser.email || u.email,
+        displayName: clerkUser.displayName || u.displayName,
+        photoUrl: clerkUser.photoUrl || u.photoUrl,
+        deletedAt: null,
+      })
+      .where(eq(users.id, u.id))
+    return u
+  }
+
+  const [created] = await db.insert(users).values({
+    clerkId: clerkUser.clerkId,
+    authProvider: "google",
+    email: clerkUser.email,
+    displayName: clerkUser.displayName,
+    photoUrl: clerkUser.photoUrl,
+    languageCode: "en",
     credits: 100,
     creditsRefreshAt: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000),
   }).returning()

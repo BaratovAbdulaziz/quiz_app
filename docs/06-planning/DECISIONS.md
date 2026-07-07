@@ -148,3 +148,31 @@
 - **Reason:** No egress fees, global edge network, S3-compatible API means existing patterns work, cost-effective for file serving.
 - **Date:** 2026-07-02
 - **Status:** Approved
+
+### D022: MinIO for Local Development
+
+- **Decision:** Use MinIO Docker container for local S3-compatible storage instead of Cloudflare R2.
+- **Reason:** Avoid external credentials for development. MinIO is free, S3-compatible, and enables offline development. Also increased `forcePathStyle: true` for MinIO compatibility.
+- **Date:** 2026-07-06
+- **Status:** Approved
+
+### D023: is_test_user Flag for Admin Filtering
+
+- **Decision:** Added `is_test_user` integer column (default 0) to users table to exclude test accounts from the admin panel.
+- **Reason:** Test accounts clutter the admin user list. The flag lets us mark dev/test users and filter them out without deleting data.
+- **Date:** 2026-07-06
+- **Status:** Approved
+
+### D024: Tokens Display in Admin Panel
+
+- **Decision:** Display user credits as "Tokens" in the admin panel, separate from the "Add credits" function.
+- **Reason:** Improved clarity — admin sees current token balance at a glance when selecting a user, distinct from the credit adjustment controls.
+- **Date:** 2026-07-06
+- **Status:** Approved
+
+### D025: Upload Modal Before PDF Processing
+
+- **Decision:** Show a modal popup after PDF file selection with filename, questions-per-test input, and progress bar during processing.
+- **Reason:** Upload-on-select was confusing — users had no chance to configure question splitting before the file was sent. The modal gives control and visual feedback during the multi-step process.
+- **Date:** 2026-07-06
+- **Status:** Approved

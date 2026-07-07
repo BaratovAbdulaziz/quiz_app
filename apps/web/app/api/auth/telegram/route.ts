@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
 
     const user = await upsertUser(tgUser)
 
-    const payload = { userId: user.id, telegramId: user.telegramId }
+    const payload = { userId: user.id, telegramId: user.telegramId! }
     const accessToken = signAccessToken(payload)
     const refreshToken = signRefreshToken(payload)
 
@@ -28,7 +28,10 @@ export async function POST(request: NextRequest) {
         refreshToken,
         user: {
           id: user.id,
+          clerkId: user.clerkId,
           telegramId: user.telegramId,
+          email: user.email,
+          authProvider: user.authProvider,
           username: user.telegramUsername,
           displayName: user.displayName,
           photoUrl: user.photoUrl,

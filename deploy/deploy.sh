@@ -4,7 +4,7 @@ set -euo pipefail
 DOMAIN="${1:-app.example.com}"
 APP_DIR="/opt/quiz-app"
 
-echo "=== Deploying Quiz App to $DOMAIN ==="
+echo "=== Deploying QuizFlow to $DOMAIN ==="
 
 cd "$APP_DIR"
 

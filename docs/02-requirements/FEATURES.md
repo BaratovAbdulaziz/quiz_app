@@ -25,6 +25,13 @@
 | User Settings | Profile and preferences | MVP | Medium | Database |
 | UI Languages | English, Uzbek, Russian | MVP | Medium | i18n framework |
 | Dark Mode | Light and dark theme toggle | MVP | Low | UI framework |
+| Questions-Per-Quiz Split | Configure how many questions per quiz when uploading PDF | MVP | Medium | PDF parsing |
+| Upload Modal | Pre-upload popup with filename, question count, progress bar | MVP | Medium | PDF upload |
+| Admin Panel | Hidden admin panel for config, users, bot management, API testing | MVP | Low | Admin API |
+| Test Users Flag | Exclude test accounts from admin panel via is_test_user column | MVP | Low | Database |
+| Tokens Display | Show user credits as tokens in admin panel | MVP | Low | Admin API |
+| Test API | Test AI generation from admin panel with topic input | MVP | Low | AI service |
+| MinIO Storage | Local S3-compatible file storage for development | MVP | Low | Infrastructure |
 | Progress Tracking | Per-quiz score and history | V1.1 | High | Database |
 | Spaced Repetition | Algorithmic review scheduling | V1.1 | Medium | Quiz engine |
 | Bookmarking | Save questions for later review | V1.1 | Low | Database |

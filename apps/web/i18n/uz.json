@@ -1,5 +1,5 @@
 {
-  "appName": "Test Ilovasi",
+  "appName": "QuizFlow",
   "loginSubtitle": "PDF yuklang yoki mavzu kiriting. Testlar yarating. Mashq qiling va har qanday fanni o‘zlashtiring.",
   "loginButton": "Telegram orqali kirish",
   "learnMore": "Batafsil",
@@ -41,6 +41,7 @@
   "restartQuiz": "Testni qayta boshlash",
   "backToLibrary": "Kutubxonaga qaytish",
   "settings": "Sozlamalar",
+  "username": "Foydalanuvchi nomi",
   "displayName": "Ko‘rinadigan ism",
   "darkTheme": "Qorong‘i mavzu",
   "language": "Til",
@@ -66,6 +67,7 @@
   "shareHint": "Bu havolaga ega har kim nusxasini import qilishi mumkin.",
   "copyLink": "Havolani nusxalash",
   "copied": "Nusxalandi!",
+  "save": "Saqlash",
   "close": "Yopish",
   "time": "Vaqt",
   "minutes": "d",
@@ -86,5 +88,14 @@
   "hideJson": "JSON yashirish",
   "noKeys": "Hali API kalitlar yo‘q",
   "keyAdded": "Kalit qo‘shildi",
-  "jsonExported": "JSON eksport qilindi"
+  "jsonExported": "JSON eksport qilindi",
+  "questions_per_quiz": "Har bir testdagi savollar:",
+  "select": "Tanlash",
+  "cancelSelection": "Bekor qilish",
+  "selected": "tanlangan",
+  "moveTo": "Ko‘chirish…",
+  "moveToFolder": "Jildga ko‘chirish",
+  "deleteSelected": "O‘chirish",
+  "deleteSelectedConfirm": "Tanlangan narsalarni o‘chirish?",
+  "deleteSelectedWarning": "Bu tanlangan test va jildlarni butunlay o‘chiradi."
 }
