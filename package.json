@@ -5,7 +5,7 @@
     "predev": "bash scripts/docker-up.sh",
     "dev": "turbo dev",
     "build": "turbo build",
-    "start": "npm run dev --workspace=@quiz-app/web",
+    "start": "npm run start --workspace=@quiz-app/web",
     "lint": "turbo lint",
     "typecheck": "turbo typecheck",
     "test": "turbo test",

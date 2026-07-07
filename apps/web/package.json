@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "tailwindcss -i ./app/globals.src.css -o ./app/globals.css && next dev",
     "build": "tailwindcss -i ./app/globals.src.css -o ./app/globals.css && next build",
-    "start": "next dev",
+    "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
     "clean": "rm -rf .next node_modules"
