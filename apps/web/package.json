@@ -4,8 +4,6 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "predev": "rm -rf .next",
-    "prebuild": "rm -rf .next",
     "build": "next build",
     "start": "next dev",
     "lint": "next lint",
