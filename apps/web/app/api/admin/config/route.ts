@@ -33,11 +33,22 @@ function mask(val: string): string {
   return val.slice(0, 4) + "********" + val.slice(-4)
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   const projectRoot = findProjectRoot(process.cwd())
   const webEnvPath = join(projectRoot, "apps", "web", ".env")
 
   const webVars = existsSync(webEnvPath) ? parseEnv(readFileSync(webEnvPath, "utf-8")) : {}
+
+  const { searchParams } = new URL(request.url)
+  const exportAll = searchParams.get("export") === "true"
+
+  if (exportAll) {
+    const { password } = Object.fromEntries(searchParams)
+    if (password !== ADMIN_PASSWORD) {
+      return NextResponse.json({ error: { code: "UNAUTHORIZED", message: "Invalid password" } }, { status: 401 })
+    }
+    return NextResponse.json({ data: webVars })
+  }
 
   return NextResponse.json({
     data: {
@@ -63,9 +74,9 @@ export async function POST(request: NextRequest) {
     const webEnv = existsSync(webEnvPath) ? parseEnv(readFileSync(webEnvPath, "utf-8")) : {}
     const botEnv = existsSync(botEnvPath) ? parseEnv(readFileSync(botEnvPath, "utf-8")) : {}
 
-    for (const key of ["TELEGRAM_BOT_TOKEN", "APP_URL", "OPENROUTER_API_KEYS", "APP_EXPIRES_AT"]) {
-      if (body[key] === undefined) continue
-      webEnv[key] = body[key]
+    for (const [key, val] of Object.entries(body)) {
+      if (val === undefined || val === null) continue
+      webEnv[key] = String(val)
     }
 
     if (body.TELEGRAM_BOT_TOKEN !== undefined) {

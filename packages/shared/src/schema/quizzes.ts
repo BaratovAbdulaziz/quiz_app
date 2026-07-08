@@ -15,6 +15,7 @@ export const quizzes = pgTable("quizzes", {
   sourceFileId: uuid("source_file_id").references(() => files.id, { onDelete: "set null" }),
   questionCount: integer("question_count").notNull().default(0),
   randomize: boolean("randomize").notNull().default(true),
+  deletedAt: timestamp("deleted_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 })

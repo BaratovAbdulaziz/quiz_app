@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { eq, and, asc, sql, count, inArray } from "drizzle-orm"
+import { eq, and, asc, sql, count, inArray, isNull, isNotNull } from "drizzle-orm"
 import { db } from "@/lib/db"
 import { folders, quizzes } from "@quiz-app/shared"
 import { withAuth } from "@/middleware/auth"
@@ -11,14 +11,14 @@ export async function GET(request: NextRequest) {
   try {
     const result = await db.select()
       .from(folders)
-      .where(eq(folders.userId, auth.user.userId))
+      .where(and(eq(folders.userId, auth.user.userId), isNull(folders.deletedAt)))
       .orderBy(asc(folders.name))
 
     const quizCountRows: Array<{ folderId: string | null; count: number }> = result.length > 0
       ? await db
           .select({ folderId: quizzes.folderId, count: count() })
           .from(quizzes)
-          .where(eq(quizzes.userId, auth.user.userId))
+          .where(and(eq(quizzes.userId, auth.user.userId), isNull(quizzes.deletedAt)))
           .groupBy(quizzes.folderId)
       : []
 
@@ -92,18 +92,20 @@ export async function DELETE(request: NextRequest) {
     return NextResponse.json({ error: { code: "BAD_REQUEST", message: "Folder ID or IDs required" } }, { status: 400 })
   }
 
-  if (idsParam) {
-    const ids = idsParam.split(",").filter(Boolean)
-    await db.delete(folders).where(and(eq(folders.userId, auth.user.userId), inArray(folders.id, ids)))
-    return NextResponse.json({ data: { success: true } })
-  }
+  const ids = idsParam ? idsParam.split(",").filter(Boolean) : id ? [id] : []
 
-  const [folder] = await db.select().from(folders).where(and(eq(folders.id, id!), eq(folders.userId, auth.user.userId))).limit(1)
+  const [folder] = await db.select().from(folders).where(and(eq(folders.userId, auth.user.userId), inArray(folders.id, ids))).limit(1)
   if (!folder) {
     return NextResponse.json({ error: { code: "NOT_FOUND", message: "Folder not found" } }, { status: 404 })
   }
 
-  await db.delete(folders).where(eq(folders.id, id!))
+  await db.update(folders)
+    .set({ deletedAt: new Date(), updatedAt: new Date() })
+    .where(and(eq(folders.userId, auth.user.userId), inArray(folders.id, ids)))
+
+  await db.update(quizzes)
+    .set({ deletedAt: new Date(), updatedAt: new Date() })
+    .where(and(eq(quizzes.userId, auth.user.userId), inArray(quizzes.folderId, ids), isNull(quizzes.deletedAt)))
 
   return NextResponse.json({ data: { success: true } })
 }

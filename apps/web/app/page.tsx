@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react"
 import { Loader } from "@/components/ui/loader"
 import { cn } from "@/lib/utils"
-import { ArrowLeft, Check, ChevronDown, ChevronRight, Clock, Edit2, FileText, Folder, LogOut, Plus, Search, Settings, Share2, Trash2, Upload, X } from "lucide-react"
+import { ArrowLeft, Check, ChevronDown, ChevronRight, Clock, Edit2, FileText, Folder, LogOut, Plus, RotateCcw, Search, Settings, Share2, Trash2, Upload, X } from "lucide-react"
 import Logo from "./Logo"
 import en from "@/i18n/en.json"
 import uz from "@/i18n/uz.json"
@@ -13,11 +13,12 @@ import {
   fetchFolders, createFolder, updateFolder, deleteFolder, deleteFolders, deleteQuizzes, moveQuizzes, updateQuiz, deleteQuiz,
   startSession, submitAnswer, skipQuestion,
   completeSession, fetchSession, generateShareLink, updateSettings, deleteAccount,
+  fetchTrashQuizzes, fetchTrashFolders, restoreTrashItems, permanentlyDeleteTrashItems,
 } from "@/lib/api-client"
 import { useUser, useAuth, useClerk } from "@clerk/nextjs"
 import GoogleSignInButton from "@/components/auth/GoogleSignInButton"
 
-type Screen = "login" | "library" | "overview" | "practice" | "exam" | "results" | "settings" | "admin"
+type Screen = "login" | "library" | "overview" | "practice" | "exam" | "results" | "settings" | "admin" | "trash"
 
 interface Question {
   id: string
@@ -190,6 +191,9 @@ function App() {
   const [adminError, setAdminError] = useState("")
   const fileInputRef = useRef<HTMLInputElement>(null)
 
+  const [trashQuizzes, setTrashQuizzes] = useState<Quiz[]>([])
+  const [trashFolders, setTrashFolders] = useState<Folder[]>([])
+
   const [botStatus, setBotStatus] = useState("checking")
   const [cfg, setCfg] = useState<Record<string, string> | null>(null)
   const [dirty, setDirty] = useState<Record<string, string>>({})
@@ -200,12 +204,14 @@ function App() {
   const [selectedUserId, setSelectedUserId] = useState("")
   const [creditAmount, setCreditAmount] = useState("")
   const [creditMsg, setCreditMsg] = useState("")
+  const [showImportModal, setShowImportModal] = useState(false)
+  const [importJson, setImportJson] = useState("")
   const keyTestStatus = useRef<Record<number, { testing: boolean; result: string }>>({})
   const [, forceRender] = useState(0)
 
   async function loadUsers() {
     try {
-      const res = await fetch("/api/admin/users?password=2312")
+      const res = await fetch(`/api/admin/users?password=${adminPassword}`)
       const d = await res.json()
       if (d.data) setAllUsers(d.data)
     } catch {}
@@ -347,12 +353,24 @@ function App() {
     setRenamingFolderId(null)
   }
 
+  async function loadTrash() {
+    try {
+      const [qRes, fRes] = await Promise.all([
+        fetchTrashQuizzes(),
+        fetchTrashFolders(),
+      ])
+      setTrashQuizzes((qRes.data ?? []) as unknown as Quiz[])
+      setTrashFolders((fRes.data ?? []) as unknown as Folder[])
+    } catch {}
+  }
+
   async function handleDeleteFolder(folderId: string) {
     if (!confirm("Delete this folder and remove all quizzes from it?")) return
     try {
       await deleteFolder(folderId)
       setFolders(p => p.filter(f => f.id !== folderId))
-      setQuizzes(p => p.map(q => q.folderId === folderId ? { ...q, folderId: null } : q))
+      setQuizzes(p => p.filter(q => q.folderId !== folderId))
+      loadTrash()
     } catch {}
   }
 
@@ -370,6 +388,7 @@ function App() {
     try {
       await deleteQuiz(quizId)
       setQuizzes(p => p.filter(q => q.id !== quizId))
+      loadTrash()
     } catch {}
   }
 
@@ -875,6 +894,7 @@ function App() {
               <>
                 <span className="text-micro text-brand-green font-semibold tracking-tight">{user.credits} {t("credits")}</span>
                 <button onClick={() => setSelectMode(true)} className="btn-ghost text-sm !px-3 !py-1.5">{t("select")}</button>
+                <button onClick={() => { loadTrash(); go("trash") }} className="btn-icon" title="Trash"><Trash2 size={16} /></button>
                 <button onClick={() => go("settings")} className="btn-icon"><Settings size={16} /></button>
               </>
             )}
@@ -1155,20 +1175,9 @@ function App() {
                   autoFocus
                   onKeyDown={e => {
                     if (e.key !== "Enter") return
-                    if (adminPassword === "2312") {
-                      setShowAdminPassword(false)
-                      setAdminError("")
-                      go("admin")
-                    } else {
-                      const newAttempts = adminAttempts + 1
-                      setAdminAttempts(newAttempts)
-                      setAdminError("Wrong password")
-                      setAdminPassword("")
-                      if (newAttempts >= 3) {
-                        setShowAdminPassword(false)
-                        setAdminError("")
-                      }
-                    }
+                    setShowAdminPassword(false)
+                    setAdminError("")
+                    go("admin")
                   }}
                 />
                 {adminError && <p className="text-body-sm text-brand-error">{adminError}</p>}
@@ -1176,20 +1185,9 @@ function App() {
               <div className="flex gap-2.5">
                 <button onClick={() => { setShowAdminPassword(false); setAdminError("") }} className="btn-secondary flex-1">Cancel</button>
                 <button onClick={() => {
-                  if (adminPassword === "2312") {
-                    setShowAdminPassword(false)
-                    setAdminError("")
-                    go("admin")
-                  } else {
-                    const newAttempts = adminAttempts + 1
-                    setAdminAttempts(newAttempts)
-                    setAdminError("Wrong password")
-                    setAdminPassword("")
-                    if (newAttempts >= 3) {
-                      setShowAdminPassword(false)
-                      setAdminError("")
-                    }
-                  }
+                  setShowAdminPassword(false)
+                  setAdminError("")
+                  go("admin")
                 }} className="btn-primary flex-1">Submit</button>
               </div>
             </div>
@@ -1600,6 +1598,84 @@ function App() {
     )
   }
 
+  if (screen === "trash") {
+    const empty = trashQuizzes.length === 0 && trashFolders.length === 0
+
+    async function handleRestore(type: "quizzes" | "folders", ids: string[]) {
+      try {
+        await restoreTrashItems(type, ids)
+        loadTrash()
+        loadLibrary()
+      } catch {}
+    }
+
+    async function handlePermanentDelete(type: "quizzes" | "folders", ids: string[]) {
+      if (!confirm(`Permanently delete ${ids.length} item(s)? This cannot be undone.`)) return
+      try {
+        await permanentlyDeleteTrashItems(type, ids)
+        loadTrash()
+      } catch {}
+    }
+
+    return (
+      <div key="trash" className="min-h-screen bg-canvas max-w-2xl mx-auto border-x border-hairline animate-slide-up">
+        <header className="flex items-center gap-3 px-6 h-14 hairline-bottom">
+          <button onClick={() => go("library")} className="btn-icon"><ArrowLeft size={16} /></button>
+          <Logo size={28} />
+          <h2 className="text-heading-5">Trash</h2>
+        </header>
+        <div className="px-6 py-6 space-y-4">
+          {empty && (
+            <div className="text-center py-16">
+              <p className="text-body-md text-steel mb-1">Trash is empty</p>
+              <p className="text-caption text-muted">Deleted items will appear here</p>
+            </div>
+          )}
+
+          {trashFolders.length > 0 && (
+            <div>
+              <p className="micro-uppercase text-steel mb-2">Folders ({trashFolders.length})</p>
+              <div className="space-y-1">
+                {trashFolders.map(f => (
+                  <div key={f.id} className="sidebar-item">
+                    <Folder size={14} className="text-steel shrink-0" />
+                    <span className="flex-1 truncate text-ink">{f.name}</span>
+                    <button onClick={() => handleRestore("folders", [f.id])} className="btn-icon !w-7 !h-7 text-brand-green" title="Restore">
+                      <RotateCcw size={13} />
+                    </button>
+                    <button onClick={() => handlePermanentDelete("folders", [f.id])} className="btn-icon !w-7 !h-7 text-brand-error" title="Delete permanently">
+                      <Trash2 size={13} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {trashQuizzes.length > 0 && (
+            <div>
+              <p className="micro-uppercase text-steel mb-2">Quizzes ({trashQuizzes.length})</p>
+              <div className="space-y-1">
+                {trashQuizzes.map(q => (
+                  <div key={q.id} className="sidebar-item">
+                    <FileText size={14} className="text-steel shrink-0" />
+                    <span className="flex-1 truncate text-ink">{q.title}</span>
+                    <button onClick={() => handleRestore("quizzes", [q.id])} className="btn-icon !w-7 !h-7 text-brand-green" title="Restore">
+                      <RotateCcw size={13} />
+                    </button>
+                    <button onClick={() => handlePermanentDelete("quizzes", [q.id])} className="btn-icon !w-7 !h-7 text-brand-error" title="Delete permanently">
+                      <Trash2 size={13} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    )
+  }
+
   if (screen === "admin") {
     function setField(key: string, val: string) {
       setDirty(p => ({ ...p, [key]: val }))
@@ -1611,7 +1687,7 @@ function App() {
       try {
         const res = await fetch("/api/admin/config", {
           method: "POST", headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ password: "2312", ...dirty }),
+          body: JSON.stringify({ password: adminPassword, ...dirty }),
         })
         if (res.ok) {
           setSaved(true)
@@ -1666,7 +1742,7 @@ function App() {
                             keyTestStatus.current[idx] = { testing: true, result: "" }; forceRender(n => n + 1)
                             fetch("/api/admin/test-key", {
                               method: "POST", headers: { "Content-Type": "application/json" },
-                              body: JSON.stringify({ password: "2312", key: keyVal }),
+                              body: JSON.stringify({ password: adminPassword, key: keyVal }),
                             }).then(r => r.json()).then(d => {
                               const info = d.data
                               if (info?.valid) {
@@ -1699,14 +1775,63 @@ function App() {
                 }} className="text-caption text-brand-blue hover:underline">+ Add key</button>
               </div>
 
-              <div className="flex items-center gap-2 pt-2">
+              <div className="flex flex-wrap items-center gap-2 pt-2">
                 <button onClick={saveConfig} disabled={saving || Object.keys(dirty).length === 0} className="btn-primary text-sm !py-1.5">
                   {saving ? "Saving..." : "Save Configuration"}
                 </button>
                 {saved && <span className="text-caption text-brand-green">Saved!</span>}
+                <button onClick={async () => {
+                  try {
+                    const res = await fetch(`/api/admin/config?export=true&password=${adminPassword}`)
+                    const d = await res.json()
+                    if (d.data) {
+                      await navigator.clipboard.writeText(JSON.stringify(d.data, null, 2))
+                      alert("Config copied to clipboard as JSON!")
+                    }
+                  } catch { alert("Export failed") }
+                }} className="btn-ghost text-sm !py-1.5">Export Config</button>
+                <button onClick={() => setShowImportModal(true)} className="btn-ghost text-sm !py-1.5">Import Config</button>
               </div>
             </div>
           </div>
+
+          {showImportModal && (
+            <div className="fixed inset-0 flex items-center justify-center z-50 px-4 animate-fade-in" style={{ backgroundColor: "rgba(0,0,0,0.5)" }}>
+              <div className="card-base max-w-md w-full p-6 animate-scale-in">
+                <p className="text-body-md-medium text-ink mb-2">Import Configuration</p>
+                <p className="text-body-sm text-steel mb-4">Paste the JSON config exported from your local app.</p>
+                <textarea
+                  value={importJson}
+                  onChange={e => setImportJson(e.target.value)}
+                  className="text-input font-mono text-sm w-full mb-4"
+                  rows={10}
+                  placeholder='{"DATABASE_URL": "...", "JWT_SECRET": "...", ...}'
+                />
+                <div className="flex gap-2.5">
+                  <button onClick={() => { setShowImportModal(false); setImportJson("") }} className="btn-secondary flex-1">Cancel</button>
+                  <button onClick={async () => {
+                    try {
+                      const parsed = JSON.parse(importJson)
+                      const res = await fetch("/api/admin/config", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ password: adminPassword, ...parsed }),
+                      })
+                      if (res.ok) {
+                        alert("Config imported! Restart the app for changes to take effect.")
+                        setShowImportModal(false)
+                        setImportJson("")
+                        fetch("/api/admin/config").then(r => r.json()).then(d => { if (d.data) setCfg(d.data) }).catch(() => {})
+                      } else {
+                        const err = await res.json()
+                        alert("Import failed: " + (err.error?.message || "Unknown error"))
+                      }
+                    } catch { alert("Invalid JSON") }
+                  }} className="btn-primary flex-1">Import</button>
+                </div>
+              </div>
+            </div>
+          )}
 
           <div>
             <p className="micro-uppercase text-steel mb-3">App Expiry Countdown</p>
@@ -1765,7 +1890,7 @@ function App() {
                     try {
                       const res = await fetch("/api/admin/test-key", {
                         method: "POST", headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ password: "2312", key }),
+                        body: JSON.stringify({ password: adminPassword, key }),
                       })
                       const d = await res.json()
                       const info = d.data
@@ -1807,7 +1932,7 @@ function App() {
                     setBotStatus("checking")
                     const res = await fetch("/api/admin/bot", {
                       method: "POST", headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({ password: "2312", action: "start" }),
+                      body: JSON.stringify({ password: adminPassword, action: "start" }),
                     })
                     const d = await res.json()
                     setBotStatus(d.data?.status === "started" ? "running" : "stopped")
@@ -1816,7 +1941,7 @@ function App() {
                   <button onClick={async () => {
                     const res = await fetch("/api/admin/bot", {
                       method: "POST", headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({ password: "2312", action: "stop" }),
+                      body: JSON.stringify({ password: adminPassword, action: "stop" }),
                     })
                     const d = await res.json()
                     setBotStatus(d.data?.status === "stopped" ? "stopped" : "running")
@@ -1857,7 +1982,7 @@ function App() {
                         try {
                           const res = await fetch("/api/admin/users", {
                             method: "POST", headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify({ password: "2312", userId: selectedUserId, credits: amt }),
+                            body: JSON.stringify({ password: adminPassword, userId: selectedUserId, credits: amt }),
                           })
                           const d = await res.json()
                           if (d.data) {
@@ -1886,7 +2011,7 @@ function App() {
                   const res = await fetch("/api/admin/kill", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ password: "2312" }),
+                    body: JSON.stringify({ password: adminPassword }),
                   })
                   if (res.ok) setSiteKilled(true)
                 } catch {}

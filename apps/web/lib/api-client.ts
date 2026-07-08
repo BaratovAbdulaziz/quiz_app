@@ -298,3 +298,25 @@ export async function updateSettings(settings: Record<string, unknown>) {
 export async function deleteAccount() {
   return api<{ data: { success: boolean } }>("/account", { method: "DELETE" })
 }
+
+export async function fetchTrashQuizzes() {
+  return api<{ data: Array<Record<string, unknown>> }>("/quizzes/trash")
+}
+
+export async function fetchTrashFolders() {
+  return api<{ data: Array<Record<string, unknown>> }>("/folders/trash")
+}
+
+export async function restoreTrashItems(type: "quizzes" | "folders", ids: string[]) {
+  return api<{ data: { success: boolean } }>(`/${type}/trash`, {
+    method: "POST",
+    body: JSON.stringify({ ids, action: "restore" }),
+  })
+}
+
+export async function permanentlyDeleteTrashItems(type: "quizzes" | "folders", ids: string[]) {
+  return api<{ data: { success: boolean } }>(`/${type}/trash`, {
+    method: "POST",
+    body: JSON.stringify({ ids, action: "delete" }),
+  })
+}

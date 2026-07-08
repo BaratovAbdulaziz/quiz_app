@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { eq, desc, and, ilike, inArray } from "drizzle-orm"
+import { eq, desc, and, ilike, inArray, isNull } from "drizzle-orm"
 import { db } from "@/lib/db"
 import { quizzes, questions } from "@quiz-app/shared"
 import { withAuth } from "@/middleware/auth"
@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
     const folderId = searchParams.get("folderId")
     const search = searchParams.get("search")
 
-    let conditions = [eq(quizzes.userId, auth.user.userId)]
+    let conditions = [eq(quizzes.userId, auth.user.userId), isNull(quizzes.deletedAt)]
 
     if (folderId) {
       conditions.push(eq(quizzes.folderId, folderId))
@@ -77,17 +77,21 @@ export async function DELETE(request: NextRequest) {
   const { searchParams } = new URL(request.url)
   const id = searchParams.get("id")
   const idsParam = searchParams.get("ids")
+  const permanent = searchParams.get("permanent") === "true"
 
   if (!id && !idsParam) {
     return NextResponse.json({ error: { code: "BAD_REQUEST", message: "Quiz ID or IDs required" } }, { status: 400 })
   }
 
-  if (idsParam) {
-    const ids = idsParam.split(",").filter(Boolean)
+  const ids = idsParam ? idsParam.split(",").filter(Boolean) : id ? [id] : []
+
+  if (permanent) {
     await db.delete(quizzes).where(and(eq(quizzes.userId, auth.user.userId), inArray(quizzes.id, ids)))
-    return NextResponse.json({ data: { success: true } })
+  } else {
+    await db.update(quizzes)
+      .set({ deletedAt: new Date(), updatedAt: new Date() })
+      .where(and(eq(quizzes.userId, auth.user.userId), inArray(quizzes.id, ids)))
   }
 
-  await db.delete(quizzes).where(and(eq(quizzes.id, id!), eq(quizzes.userId, auth.user.userId)))
   return NextResponse.json({ data: { success: true } })
 }
