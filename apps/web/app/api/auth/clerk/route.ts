@@ -105,7 +105,7 @@ export async function POST(request: NextRequest) {
           telegramId: user.telegramId,
           email: user.email,
           authProvider: user.authProvider,
-          username: user.telegramUsername,
+          username: user.username,
           displayName: user.displayName,
           photoUrl: user.photoUrl,
           languageCode: user.languageCode,

@@ -3,7 +3,7 @@ import { eq, sql } from "drizzle-orm"
 import { db } from "@/lib/db"
 import { users } from "@quiz-app/shared"
 
-const ADMIN_PASSWORD = "2312"
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || ""
 
 export async function GET(request: NextRequest) {
   try {

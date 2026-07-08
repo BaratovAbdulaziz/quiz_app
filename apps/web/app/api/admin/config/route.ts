@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { readFileSync, writeFileSync, existsSync } from "fs"
 import { join, dirname, resolve } from "path"
 
-const ADMIN_PASSWORD = "2312"
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || ""
 
 function findProjectRoot(start: string): string {
   let dir = resolve(start)

@@ -3,7 +3,7 @@ import { execSync, spawn } from "child_process"
 import { writeFileSync, existsSync, readdirSync } from "fs"
 import { join, dirname, resolve } from "path"
 
-const ADMIN_PASSWORD = "2312"
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || ""
 
 function findProjectRoot(start: string): string {
   let dir = resolve(start)
