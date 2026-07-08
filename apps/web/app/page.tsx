@@ -196,9 +196,6 @@ function App() {
 
   const [botStatus, setBotStatus] = useState("checking")
   const [cfg, setCfg] = useState<Record<string, string> | null>(null)
-  const [dirty, setDirty] = useState<Record<string, string>>({})
-  const [saving, setSaving] = useState(false)
-  const [saved, setSaved] = useState(false)
 
   const [allUsers, setAllUsers] = useState<Array<{ id: string; telegramId: number; telegramUsername: string | null; displayName: string; credits: number; tokens: number }>>([])
   const [selectedUserId, setSelectedUserId] = useState("")
@@ -1677,27 +1674,6 @@ function App() {
   }
 
   if (screen === "admin") {
-    function setField(key: string, val: string) {
-      setDirty(p => ({ ...p, [key]: val }))
-      setSaved(false)
-    }
-
-    async function saveConfig() {
-      setSaving(true)
-      try {
-        const res = await fetch("/api/admin/config", {
-          method: "POST", headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ password: adminPassword, ...dirty }),
-        })
-        if (res.ok) {
-          setSaved(true)
-          setCfg(p => p ? { ...p, ...dirty } : p)
-          setDirty({})
-        }
-      } catch {}
-      setSaving(false)
-    }
-
     return (
       <div key="admin" className="min-h-screen bg-canvas max-w-2xl mx-auto border-x border-hairline animate-slide-up" style={{ paddingBottom: "100px" }}>
         <header className="flex items-center gap-3 px-6 h-14 hairline-bottom">
@@ -1709,77 +1685,9 @@ function App() {
 
           <div>
             <p className="micro-uppercase text-steel mb-3">Configuration</p>
-            <div className="card-base p-4 space-y-4">
-              <div>
-                <label className="text-body-sm font-medium text-ink block mb-1">TELEGRAM_BOT_TOKEN</label>
-                <input value={dirty["TELEGRAM_BOT_TOKEN"] ?? cfg?.TELEGRAM_BOT_TOKEN ?? ""} onChange={e => setField("TELEGRAM_BOT_TOKEN", e.target.value)} className="text-input font-mono text-sm" placeholder="Telegram bot token" />
-              </div>
-              <div>
-                <label className="text-body-sm font-medium text-ink block mb-1">APP_URL</label>
-                <input value={dirty["APP_URL"] ?? cfg?.APP_URL ?? ""} onChange={e => setField("APP_URL", e.target.value)} className="text-input text-sm" placeholder="https://yourdomain.com" />
-              </div>
-              <div>
-                <label className="text-body-sm font-medium text-ink block mb-1">Fallback API Keys</label>
-                {(() => {
-                  const raw = dirty["OPENROUTER_API_KEYS"] ?? cfg?.OPENROUTER_API_KEYS ?? ""
-                  const keys = raw ? raw.split(",") : [""]
-                  return keys.map((k, i) => {
-                    const st = keyTestStatus.current[i] ?? { testing: false, result: "" }
-                    return (
-                      <div key={`ak-${k || i}-${i}`} className="mb-2">
-                        <div className="flex gap-2">
-                          <input value={k} onChange={e => {
-                            const updated = [...keys]
-                            updated[i] = e.target.value
-                            setField("OPENROUTER_API_KEYS", updated.join(","))
-                            keyTestStatus.current[i] = { testing: false, result: "" }; forceRender(n => n + 1)
-                          }} className="text-input font-mono text-sm flex-1" placeholder={`sk-or-... (key ${i + 1})`} />
-                          <span onClick={e => {
-                            e.preventDefault()
-                            const keyVal = k.trim()
-                            if (!keyVal || st.testing) return
-                            const idx = i
-                            keyTestStatus.current[idx] = { testing: true, result: "" }; forceRender(n => n + 1)
-                            fetch("/api/admin/test-key", {
-                              method: "POST", headers: { "Content-Type": "application/json" },
-                              body: JSON.stringify({ password: adminPassword, key: keyVal }),
-                            }).then(r => r.json()).then(d => {
-                              const info = d.data
-                              if (info?.valid) {
-                                const c = info.credits != null ? ` — $${info.credits.toFixed(4)}` : ""
-                                keyTestStatus.current[idx] = { testing: false, result: `✅ Valid${c}` }; forceRender(n => n + 1)
-                              } else {
-                                keyTestStatus.current[idx] = { testing: false, result: `❌ ${info?.error || "Invalid"}` }; forceRender(n => n + 1)
-                              }
-                            }).catch(() => {
-                              keyTestStatus.current[idx] = { testing: false, result: "❌ Request failed" }; forceRender(n => n + 1)
-                            })
-                          }} className={cn("inline-flex items-center justify-center cursor-pointer select-none text-sm !px-2 !py-1 border border-btn-border rounded-md transition-colors duration-150", st.testing ? "opacity-40 pointer-events-none" : "hover:bg-surface")}>
-                            {st.testing ? "..." : "Test"}
-                          </span>
-                          <button type="button" onClick={() => {
-                            const updated = keys.filter((_, j) => j !== i)
-                            setField("OPENROUTER_API_KEYS", updated.join(","))
-                          }} className="text-caption text-brand-error hover:underline shrink-0">Remove</button>
-                        </div>
-                        {st.result && (
-                          <p className={cn("text-caption mt-0.5", st.result.startsWith("✅") ? "text-brand-green" : "text-brand-error")}>{st.result}</p>
-                        )}
-                      </div>
-                    )
-                  })
-                })()}
-                <button onClick={() => {
-                  const current = dirty["OPENROUTER_API_KEYS"] ?? cfg?.OPENROUTER_API_KEYS ?? ""
-                  setField("OPENROUTER_API_KEYS", current ? current + "," : "")
-                }} className="text-caption text-brand-blue hover:underline">+ Add key</button>
-              </div>
-
-              <div className="flex flex-wrap items-center gap-2 pt-2">
-                <button onClick={saveConfig} disabled={saving || Object.keys(dirty).length === 0} className="btn-primary text-sm !py-1.5">
-                  {saving ? "Saving..." : "Save Configuration"}
-                </button>
-                {saved && <span className="text-caption text-brand-green">Saved!</span>}
+            <div className="card-base p-4 space-y-3">
+              <p className="text-caption text-steel">Export your local env config as JSON to paste into Railway, or import JSON from another deployment.</p>
+              <div className="flex flex-wrap gap-2">
                 <button onClick={async () => {
                   try {
                     const res = await fetch(`/api/admin/config?export=true&password=${adminPassword}`)
@@ -1789,7 +1697,7 @@ function App() {
                       alert("Config copied to clipboard as JSON!")
                     }
                   } catch { alert("Export failed") }
-                }} className="btn-ghost text-sm !py-1.5">Export Config</button>
+                }} className="btn-primary text-sm !py-1.5">Export Config</button>
                 <button onClick={() => setShowImportModal(true)} className="btn-ghost text-sm !py-1.5">Import Config</button>
               </div>
             </div>
@@ -1832,49 +1740,6 @@ function App() {
               </div>
             </div>
           )}
-
-          <div>
-            <p className="micro-uppercase text-steel mb-3">App Expiry Countdown</p>
-            <div className="card-base p-4 space-y-3">
-              <div>
-                <label className="text-body-sm font-medium text-ink block mb-1">APP_EXPIRES_AT</label>
-                <input
-                  type="date"
-                  value={(() => {
-                    const v = dirty["APP_EXPIRES_AT"] ?? cfg?.APP_EXPIRES_AT ?? ""
-                    return v ? v.split("T")[0] : ""
-                  })()}
-                  onChange={e => setField("APP_EXPIRES_AT", e.target.value)}
-                  className="text-input text-sm"
-                />
-              </div>
-              {(() => {
-                const expiryStr = cfg?.APP_EXPIRES_AT || ""
-                if (!expiryStr) return <p className="text-caption text-steel">Set an expiry date above and save.</p>
-                const target = new Date(expiryStr).getTime()
-                const now = Date.now()
-                const diff = target - now
-                if (diff <= 0) return <p className="text-body-sm text-brand-error font-semibold">⚠ App has expired!</p>
-                const days = Math.floor(diff / 86400000)
-                const hours = Math.floor((diff % 86400000) / 3600000)
-                const minutes = Math.floor((diff % 3600000) / 60000)
-                const seconds = Math.floor((diff % 60000) / 1000)
-                const isUrgent = days < 30
-                return (
-                  <div className="space-y-2">
-                    <div className={cn("text-2xl font-mono font-bold tracking-wider", isUrgent ? "text-brand-error" : "text-brand-green")}>
-                      {String(days).padStart(2, "0")}d {String(hours).padStart(2, "0")}h {String(minutes).padStart(2, "0")}m {String(seconds).padStart(2, "0")}s
-                    </div>
-                    {isUrgent && (
-                      <div className="flex items-center gap-2 p-2 rounded-md bg-brand-error/10 border border-brand-error/20">
-                        <span className="text-body-sm text-brand-error font-medium">⚠ Less than 30 days remaining — back up your API keys below!</span>
-                      </div>
-                    )}
-                  </div>
-                )
-              })()}
-            </div>
-          </div>
 
           <div>
             <p className="micro-uppercase text-steel mb-3">Backup OpenRouter Keys</p>
