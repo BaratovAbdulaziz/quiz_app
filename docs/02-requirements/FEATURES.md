@@ -11,6 +11,15 @@
 | AI Quiz Generation | Generate quiz from topic prompt | MVP | High | AI service, credits |
 | AI Follow-Up Questions | AI asks clarifying questions during generation if needed | MVP | Medium | AI service |
 | AI Credits System | Credits consumed for AI operations, refreshed every 15 days | MVP | High | AI service |
+| Crossword Generator (AI) | Generate crossword from topic prompt via AI | MVP | Medium | AI service, crosswords |
+| Crossword Generator (Manual) | Create crossword by entering clues and answers manually | MVP | Medium | Crosswords |
+| Crossword Solving | Interactive crossword solve screen with per-clue inputs and answer checking | MVP | Medium | Crosswords |
+| Crossword Library | Crosswords displayed alongside quizzes in library tree | MVP | Low | Crosswords |
+| Crossword Sharing | Share crosswords by link — recipient imports a copy | MVP | Medium | API, crosswords |
+| Shared Quiz Taking | Public page at /shared/[token] to take a quiz directly without importing | MVP | Medium | share |
+| Teachers Mode (Analytics) | Dashboard showing attempt count, scores, percentages for shared content | MVP | Low | share, sharedAttempts |
+| Answer Key (Quiz) | Toggle on quiz overview that reveals all correct answers for review | MVP | Low | Quiz engine |
+| Answer Key (Crossword) | Toggle on crossword screen that fills in all answers in the grid | MVP | Low | Crosswords |
 | Practice Mode | Interactive quiz with immediate feedback (red X / green tick) | MVP | Critical | Quiz engine |
 | Skip Question | Skip a question during practice or exam | MVP | Medium | Quiz engine |
 | Retry Incorrect | Retry only incorrectly answered questions (practice mode) | MVP | Low | Quiz engine |

@@ -18,3 +18,23 @@ export interface QuizData {
   createdAt: string
   questions: QuestionData[]
 }
+
+export interface SlideData {
+  id: string
+  title: string
+  content: string[]
+  layout: "title" | "titleContent" | "twoColumn" | "imageContent" | "blank" | "sectionDivider" | "stats" | "quote"
+  order: number
+  imageUrl?: string
+}
+
+export interface PresentationData {
+  id: string
+  title: string
+  description?: string
+  source: "ai_generated" | "manual"
+  slideCount: number
+  folderId?: string
+  createdAt: string
+  slides: SlideData[]
+}

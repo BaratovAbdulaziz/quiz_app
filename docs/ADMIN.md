@@ -2,17 +2,18 @@
 
 ## Access
 
-From the library screen, type `/pathfinder` in the search bar. A password prompt appears (3 attempts). Enter password `2312` to enter the admin panel.
+From the library screen, type `/pathfinder` in the search bar. A password prompt appears (3 attempts). Enter the `ADMIN_PASSWORD` set in your environment variables.
 
 ## Features
 
-### Configuration
-- View and edit `.env` variables: `TELEGRAM_BOT_TOKEN`, `APP_URL`, `OPENROUTER_API_KEYS` (comma-separated list with add/remove per key)
-- Save Configuration button persists changes to the server's `.env` file
+### Configuration (Export / Import)
+- **Export Config** — copies all env vars to clipboard as JSON (one click)
+- **Import Config** — paste JSON from another deployment (e.g. local → Railway) to write all env vars at once
+- No per-field inputs — configuration is done entirely through environment variables
 
 ### Telegram Bot
 - View bot status (Running / Stopped / Checking...)
-- Start and Stop the bot via PM2
+- Start and Stop the bot
 
 ### Users
 - Dropdown lists all non-test users with `displayName`, `@telegramUsername`, and `tokens` balance
@@ -42,11 +43,12 @@ UPDATE users SET is_test_user = 1 WHERE telegram_username = 'my_test_bot';
 
 | Method | Path | Purpose |
 |--------|------|---------|
-| GET | `/api/admin/users?password=2312` | List non-test users with tokens |
+| GET | `/api/admin/users` | List non-test users with tokens |
 | POST | `/api/admin/users` | Add credits to a user (`{ password, userId, credits }`) |
 | GET | `/api/admin/bot` | Check bot status |
-| POST | `/api/admin/bot` | Start/stop bot (`{ password, action: "start"|"stop" }`) |
+| POST | `/api/admin/bot` | Start/stop bot (`{ action: "start"|"stop" }`) |
 | GET | `/api/admin/config` | Read `.env` values (keys masked) |
 | POST | `/api/admin/config` | Write `.env` values |
+| GET | `/api/admin/config?export=true` | Export all env vars as JSON |
 | GET | `/api/admin/kill` | Check if site is killed |
 | POST | `/api/admin/kill` | Kill site |

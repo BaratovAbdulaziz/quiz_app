@@ -9,7 +9,7 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - pgdata:/var/lib/postgresql/data
+      - pgdata:/var/lib/postgresql
     healthcheck:
       test: pg_isready -U postgres -d quiz_app
       interval: 5s
@@ -62,7 +62,7 @@ services:
       NEXT_PUBLIC_CONVEX_URL: ${NEXT_PUBLIC_CONVEX_URL:-}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:-admin}
     entrypoint: >
-      sh -c "npm run migrate --workspace=@quiz-app/shared && npm run start"
+      sh -c "npm run migrate --workspace=@quiz-app/shared && echo 'App ready at http://localhost:3000' && npm run start"
 
 volumes:
   pgdata:

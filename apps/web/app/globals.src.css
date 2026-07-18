@@ -11,8 +11,10 @@
   --color-btn-border: 229 229 229;
   --color-ink: 10 10 10;
   --color-steel: 90 90 92;
-  --color-muted: 168 168 170;
+  --color-muted: 118 118 118;
 }
+
+/* ── Entrance animations ── */
 
 @keyframes fade-in {
   from { opacity: 0; }
@@ -20,34 +22,92 @@
 }
 
 @keyframes slide-up {
-  from { opacity: 0; transform: translateY(16px); }
+  from { opacity: 0; transform: translateY(20px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes scale-in {
-  from { opacity: 0; transform: scale(0.92); }
+  from { opacity: 0; transform: scale(0.9); }
   to { opacity: 1; transform: scale(1); }
 }
 
 @keyframes slide-down {
-  from { opacity: 0; transform: translateY(-10px); }
+  from { opacity: 0; transform: translateY(-12px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
-.animate-fade-in {
-  animation: fade-in 0.25s ease-out both;
+@keyframes slide-in-left {
+  from { opacity: 0; transform: translateX(-24px); }
+  to { opacity: 1; transform: translateX(0); }
 }
 
-.animate-slide-up {
-  animation: slide-up 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+@keyframes slide-in-right {
+  from { opacity: 0; transform: translateX(24px); }
+  to { opacity: 1; transform: translateX(0); }
 }
 
-.animate-scale-in {
-  animation: scale-in 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
+@keyframes bounce-in {
+  0% { opacity: 0; transform: scale(0.3); }
+  50% { opacity: 1; transform: scale(1.08); }
+  70% { transform: scale(0.95); }
+  100% { transform: scale(1); }
 }
 
-.animate-slide-down {
-  animation: slide-down 0.3s ease-out both;
+@keyframes pop-in {
+  0% { opacity: 0; transform: scale(0.6) translateY(8px); }
+  60% { opacity: 1; transform: scale(1.04) translateY(-2px); }
+  100% { transform: scale(1) translateY(0); }
+}
+
+@keyframes flip-in-x {
+  0% { opacity: 0; transform: perspective(400px) rotateX(90deg); }
+  40% { transform: perspective(400px) rotateX(-10deg); }
+  70% { transform: perspective(400px) rotateX(5deg); }
+  100% { opacity: 1; transform: perspective(400px) rotateX(0); }
+}
+
+@keyframes flip-in-y {
+  0% { opacity: 0; transform: perspective(400px) rotateY(90deg); }
+  40% { transform: perspective(400px) rotateY(-10deg); }
+  70% { transform: perspective(400px) rotateY(5deg); }
+  100% { opacity: 1; transform: perspective(400px) rotateY(0); }
+}
+
+@keyframes blur-in {
+  from { opacity: 0; filter: blur(12px); transform: scale(1.02); }
+  to { opacity: 1; filter: blur(0); transform: scale(1); }
+}
+
+@keyframes rise-in {
+  from { opacity: 0; transform: translateY(40px) scale(0.96); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes zoom-blur-in {
+  from { opacity: 0; transform: scale(1.15); filter: blur(8px); }
+  to { opacity: 1; transform: scale(1); filter: blur(0); }
+}
+
+/* ── Continuous animations ── */
+
+@keyframes pulse-soft {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(200%); }
+}
+
+@keyframes glow {
+  0%, 100% { box-shadow: 0 0 5px rgba(74, 222, 128, 0.2); }
+  50% { box-shadow: 0 0 24px rgba(74, 222, 128, 0.45); }
+}
+
+@keyframes float-subtle {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
 }
 
 @keyframes progress-bar {
@@ -56,9 +116,119 @@
   100% { width: 90%; }
 }
 
+@keyframes spin-slow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes wiggle {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(-3deg); }
+  75% { transform: rotate(3deg); }
+}
+
+@keyframes dash-march {
+  to { stroke-dashoffset: -12; }
+}
+
+@keyframes gradient-shift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+/* ── Utility classes ── */
+
+.animate-fade-in {
+  animation: fade-in 0.3s ease-out both;
+}
+
+.animate-slide-up {
+  animation: slide-up 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.animate-scale-in {
+  animation: scale-in 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+.animate-slide-down {
+  animation: slide-down 0.35s ease-out both;
+}
+
+.animate-slide-in-left {
+  animation: slide-in-left 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.animate-slide-in-right {
+  animation: slide-in-right 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.animate-bounce-in {
+  animation: bounce-in 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+.animate-pop-in {
+  animation: pop-in 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+.animate-flip-in-x {
+  animation: flip-in-x 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.animate-flip-in-y {
+  animation: flip-in-y 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.animate-blur-in {
+  animation: blur-in 0.5s ease-out both;
+}
+
+.animate-rise-in {
+  animation: rise-in 0.55s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.animate-zoom-blur-in {
+  animation: zoom-blur-in 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.animate-pulse-soft {
+  animation: pulse-soft 2.5s ease-in-out infinite;
+}
+
+.animate-glow {
+  animation: glow 2.5s ease-in-out infinite;
+}
+
+.animate-float {
+  animation: float-subtle 3.5s ease-in-out infinite;
+}
+
 .animate-progress-bar {
   animation: progress-bar 2s ease-in-out infinite;
 }
+
+.animate-spin-slow {
+  animation: spin-slow 8s linear infinite;
+}
+
+.animate-wiggle {
+  animation: wiggle 1s ease-in-out infinite;
+}
+
+.animate-gradient-shift {
+  background-size: 200% 200%;
+  animation: gradient-shift 4s ease infinite;
+}
+
+/* ── Stagger delay utilities ── */
+
+.stagger-1 { animation-delay: 0.04s; }
+.stagger-2 { animation-delay: 0.08s; }
+.stagger-3 { animation-delay: 0.12s; }
+.stagger-4 { animation-delay: 0.16s; }
+.stagger-5 { animation-delay: 0.2s; }
+.stagger-6 { animation-delay: 0.24s; }
+.stagger-7 { animation-delay: 0.28s; }
+.stagger-8 { animation-delay: 0.32s; }
 
 .dark {
   --color-canvas: 10 10 10;
@@ -94,91 +264,177 @@
 
 @layer components {
   .btn-primary {
-    @apply bg-primary text-on-primary rounded-full px-5 py-2.5 text-button-md inline-flex items-center justify-center gap-1.5 transition-colors duration-150 cursor-pointer;
+    @apply bg-primary text-on-primary rounded-full px-5 py-2.5 text-button-md inline-flex items-center justify-center gap-1.5 cursor-pointer;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.04);
+    transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .btn-primary:hover {
+    box-shadow: 0 4px 16px rgba(0,0,0,0.12), 0 2px 6px rgba(0,0,0,0.06);
+    transform: translateY(-1px) scale(1.01);
   }
   .btn-primary:active {
     @apply bg-charcoal;
+    transform: translateY(0) scale(0.98);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.06);
+    transition-duration: 0.1s;
   }
   .btn-primary:disabled {
     @apply bg-hairline text-muted cursor-not-allowed;
+    box-shadow: none;
+    transform: none;
   }
 
   .btn-accent-green {
-    @apply bg-brand-green text-primary rounded-full px-5 py-2.5 text-button-md inline-flex items-center justify-center gap-1.5 transition-colors duration-150 cursor-pointer;
+    @apply bg-brand-green text-primary rounded-full px-5 py-2.5 text-button-md inline-flex items-center justify-center gap-1.5 cursor-pointer;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.06);
+    transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .btn-accent-green:hover {
+    box-shadow: 0 4px 16px rgba(0,212,164,0.25);
+    transform: translateY(-1px) scale(1.01);
+  }
+  .btn-accent-green:active {
+    transform: translateY(0) scale(0.98);
+    transition-duration: 0.1s;
   }
 
   .btn-on-dark {
     @apply bg-on-dark text-primary rounded-full px-5 py-2.5 text-button-md inline-flex items-center justify-center gap-1.5 cursor-pointer;
+    transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .btn-on-dark:hover {
+    transform: translateY(-1px) scale(1.01);
+    box-shadow: 0 4px 16px rgba(255,255,255,0.15);
   }
 
   .btn-secondary {
-    @apply bg-transparent text-ink rounded-full px-5 py-2.5 text-button-md inline-flex items-center justify-center gap-1.5 border border-btn-border transition-colors duration-150 cursor-pointer;
+    @apply bg-transparent text-ink rounded-full px-5 py-2.5 text-button-md inline-flex items-center justify-center gap-1.5 border border-btn-border cursor-pointer;
+    transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .btn-secondary:hover {
+    @apply bg-surface;
+    border-color: rgb(var(--color-steel) / 0.3);
+    transform: translateY(-0.5px);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
   }
   .btn-secondary:active {
     @apply bg-surface;
+    transform: scale(0.97);
+    transition-duration: 0.1s;
   }
 
   .btn-ghost {
-    @apply bg-transparent text-ink rounded-md px-3 py-2 text-button-md inline-flex items-center justify-center gap-1.5 transition-colors duration-150 cursor-pointer;
+    @apply bg-transparent text-ink rounded-md px-3 py-2 text-button-md inline-flex items-center justify-center gap-1.5 cursor-pointer;
+    transition: all 0.2s ease;
   }
   .btn-ghost:hover {
     @apply bg-surface;
+    transform: translateY(-0.5px);
+  }
+  .btn-ghost:active {
+    transform: scale(0.97);
+    transition-duration: 0.1s;
   }
 
   .btn-icon {
-    @apply bg-canvas text-ink rounded-full w-8 h-8 inline-flex items-center justify-center border border-btn-border transition-colors duration-150 cursor-pointer shrink-0;
+    @apply bg-canvas text-ink rounded-full w-8 h-8 inline-flex items-center justify-center border border-btn-border cursor-pointer shrink-0;
+    transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
   }
   .btn-icon:hover {
     @apply bg-surface;
+    border-color: rgb(var(--color-steel) / 0.3);
+    transform: scale(1.08);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  }
+  .btn-icon:active {
+    transform: scale(0.92);
+    transition-duration: 0.1s;
   }
 
   .btn-danger {
-    @apply bg-brand-error text-white rounded-full px-5 py-2.5 text-button-md inline-flex items-center justify-center gap-1.5 transition-colors duration-150 cursor-pointer;
+    @apply bg-brand-error text-white rounded-full px-5 py-2.5 text-button-md inline-flex items-center justify-center gap-1.5 cursor-pointer;
+    box-shadow: 0 1px 2px rgba(212,86,86,0.2);
+    transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .btn-danger:hover {
+    box-shadow: 0 4px 16px rgba(212,86,86,0.35);
+    transform: translateY(-1px);
   }
   .btn-danger:active {
     background-color: #bf4040;
+    transform: translateY(0) scale(0.98);
+    transition-duration: 0.1s;
   }
   .btn-danger:disabled {
     @apply opacity-50 cursor-not-allowed;
+    box-shadow: none;
+    transform: none;
   }
 
   .btn-ghost-danger {
-    @apply bg-transparent text-brand-error rounded-md px-3 py-2 text-button-md inline-flex items-center justify-center gap-1.5 transition-colors duration-150 cursor-pointer;
+    @apply bg-transparent text-brand-error rounded-md px-3 py-2 text-button-md inline-flex items-center justify-center gap-1.5 cursor-pointer;
+    transition: all 0.2s ease;
   }
   .btn-ghost-danger:hover {
     background-color: rgba(212, 86, 86, 0.08);
   }
 
   .card-base {
-    @apply bg-canvas rounded-lg p-xl border border-hairline;
+    @apply bg-canvas rounded-xl p-xl border border-hairline;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .card-base:hover {
+    box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+    transform: translateY(-1px);
   }
 
   .card-feature {
-    @apply bg-surface rounded-lg p-xxl;
+    @apply bg-surface rounded-xl p-xxl;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .card-feature:hover {
+    box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+    transform: translateY(-2px);
   }
 
   .text-input {
-    @apply bg-canvas text-ink rounded-md px-md py-sm border border-hairline text-body-md h-10 outline-none transition-colors duration-150 w-full;
+    @apply bg-canvas text-ink rounded-lg px-md py-sm border border-hairline text-body-md h-10 outline-none w-full;
+    transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
   }
   .text-input:focus {
     @apply border-2 border-brand-green;
+    box-shadow: 0 0 0 4px rgba(74, 222, 128, 0.12);
+    transform: scale(1.005);
   }
 
   .search-pill {
-    @apply bg-surface text-steel rounded-md px-md py-xs border border-hairline text-body-sm h-9 outline-none transition-colors duration-150 w-full;
+    @apply bg-surface text-steel rounded-lg px-md py-xs border border-hairline text-body-sm h-9 outline-none w-full;
+    transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
   }
   .search-pill:focus {
     @apply border-2 border-brand-green;
+    box-shadow: 0 0 0 4px rgba(74, 222, 128, 0.12);
+    transform: scale(1.005);
   }
 
   .sidebar-item {
-    @apply flex items-center gap-2 px-md py-1.5 rounded-sm text-body-sm text-steel transition-colors duration-150 cursor-pointer;
+    @apply flex items-center gap-2 px-md py-1.5 rounded-lg text-body-sm text-steel cursor-pointer;
+    transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
   }
   .sidebar-item:hover {
-    @apply bg-surface;
+    @apply bg-surface text-ink;
+    transform: translateX(3px);
+    box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+  }
+  .sidebar-item:active {
+    transform: scale(0.97) translateX(3px);
+    transition-duration: 0.1s;
   }
   .sidebar-item-active {
     @apply sidebar-item bg-surface text-ink font-medium;
+    box-shadow: inset 0 0 0 1px rgb(var(--color-hairline));
   }
 
   .micro-uppercase {
@@ -193,5 +449,289 @@
     @apply border-b border-hairline;
   }
 
+}
 
+.clues-section {
+  width: 100%;
+}
+
+.clue-number {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 9999px;
+  background: rgb(var(--color-hairline));
+  font-size: 11px;
+  font-weight: 700;
+  color: rgb(var(--color-steel));
+  flex-shrink: 0;
+}
+
+.clue-item {
+  display: flex;
+  align-items: center;
+  gap: 0;
+}
+
+.crossword-number {
+  position: absolute;
+  top: 3px;
+  left: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  color: #444;
+  pointer-events: none;
+  line-height: 1;
+  font-family: "Inter", system-ui, sans-serif;
+}
+
+.crossword-cell.blocked {
+  border-radius: 3px !important;
+}
+
+.crossword-print-title,
+.crossword-print-header,
+.crossword-print-subtitle,
+.crossword-print-footer,
+.crossword-print-wordmark,
+.crossword-print-brand {
+  display: none;
+}
+
+@media print {
+  @page {
+    margin: 0.6in;
+    size: letter portrait;
+  }
+
+  html, body {
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  body * { visibility: hidden !important; }
+
+  .animate-slide-up { animation: none !important; }
+
+  header, .flex.items-center.gap-2\.5, .btn-primary, .btn-secondary, .btn-ghost, [class*="btn-"], .btn-icon, [class*="btn"] { display: none !important; }
+
+  .crossword-page,
+  .crossword-page * {
+    visibility: visible !important;
+  }
+
+  .crossword-page {
+    position: static !important;
+    width: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    background: #ffffff !important;
+    border: none !important;
+    max-width: 100% !important;
+    overflow: visible !important;
+  }
+
+  .crossword-print-header {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    gap: 3pt !important;
+    margin-bottom: 10pt !important;
+  }
+
+  .crossword-print-brand {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 5pt !important;
+  }
+
+  .crossword-print-logo {
+    display: block !important;
+    width: 18px !important;
+    height: 18px !important;
+    flex-shrink: 0 !important;
+  }
+
+  .crossword-print-logo rect:first-child { fill: #15803d !important; }
+  .crossword-print-logo path { stroke: #ffffff !important; }
+
+  .crossword-print-wordmark {
+    display: block !important;
+    font-size: 13pt !important;
+    font-weight: 500 !important;
+    color: #666 !important;
+    font-family: "Helvetica", "Arial", sans-serif !important;
+    letter-spacing: 0.02em !important;
+  }
+
+  .crossword-print-title {
+    display: block !important;
+    text-align: center !important;
+    font-size: 17pt !important;
+    font-weight: 700 !important;
+    color: #1a1a1a !important;
+    font-family: "Palatino Linotype", "Book Antiqua", Palatino, "Georgia", serif !important;
+    margin-top: 1pt !important;
+  }
+
+  .crossword-card {
+    margin: 0 auto !important;
+    border: none !important;
+    box-shadow: none !important;
+    background: transparent !important;
+    width: fit-content !important;
+    break-inside: avoid !important;
+  }
+
+  .crossword-grid {
+    display: grid !important;
+    gap: 0 !important;
+    background: transparent !important;
+    border: 0.5pt solid #999 !important;
+    margin: 0 auto !important;
+    transform: none !important;
+    break-inside: avoid !important;
+  }
+
+  .crossword-cell {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    position: relative !important;
+    border: 0.5pt solid #999 !important;
+  }
+
+  .crossword-cell.blocked {
+    background: #d0cec8 !important;
+    background-color: #d0cec8 !important;
+  }
+
+  .crossword-cell:not(.blocked) {
+    background: #ffffff !important;
+    background-color: #ffffff !important;
+  }
+
+  .crossword-cell .crossword-number {
+    font-size: 8pt !important;
+    color: #888 !important;
+    font-weight: 600 !important;
+    position: absolute !important;
+    top: 1pt !important;
+    left: 1.5pt !important;
+    line-height: 1 !important;
+    font-family: "Helvetica", "Arial", sans-serif !important;
+  }
+
+  .crossword-cell .crossword-letter {
+    color: #000000 !important;
+    font-family: "Palatino Linotype", "Book Antiqua", Palatino, "Georgia", serif !important;
+    font-size: 11pt !important;
+  }
+
+  .px-6.flex-1 {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    padding: 0 !important;
+    overflow: visible !important;
+  }
+
+  .clues-section {
+    width: 100% !important;
+    break-before: page !important;
+    page-break-before: always !important;
+  }
+
+  .clues-grid {
+    width: 100% !important;
+    margin: 0 auto !important;
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 24pt !important;
+    border-top: 1px solid #ccc !important;
+    padding-top: 8pt !important;
+  }
+
+  .clue-item {
+    border: none !important;
+    background: transparent !important;
+    padding: 3pt 0 !important;
+    border-radius: 0 !important;
+    visibility: visible !important;
+    display: flex !important;
+    align-items: baseline !important;
+    gap: 5pt !important;
+  }
+
+  .clue-item .text-ink,
+  .clue-item .text-steel,
+  .micro-uppercase {
+    color: #000000 !important;
+  }
+
+  .clue-item .text-caption {
+    font-size: 9.5pt !important;
+    line-height: 1.4 !important;
+  }
+
+  .clue-item .clue-number {
+    display: inline !important;
+    width: auto !important;
+    height: auto !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    font-size: 9.5pt !important;
+    font-weight: 400 !important;
+    color: #999 !important;
+    margin-right: 0 !important;
+    flex-shrink: 0 !important;
+    min-width: 14pt !important;
+  }
+
+  .micro-uppercase {
+    font-size: 8pt !important;
+    letter-spacing: 0.05em !important;
+    text-transform: lowercase !important;
+    color: #999 !important;
+    border-bottom: 1px solid #eee !important;
+    padding-bottom: 4pt !important;
+    margin-bottom: 4pt !important;
+  }
+
+  .clue-item .text-brand-green { color: #15803d !important; }
+  .clue-item .text-brand-error { color: #dc2626 !important; }
+
+  .crossword-page .text-steel,
+  .crossword-page .text-ink,
+  .crossword-page .text-muted {
+    color: #000000 !important;
+  }
+
+  .crossword-page .text-heading-5 { display: none !important; }
+
+  .crossword-print-footer {
+    display: flex !important;
+    justify-content: space-between !important;
+    width: 100% !important;
+    margin-top: 24pt !important;
+    padding: 6pt 0 !important;
+    border-top: 0.5pt solid #e5e5e5 !important;
+    font-size: 7pt !important;
+    color: #999 !important;
+    font-family: "Helvetica", "Arial", sans-serif !important;
+  }
+
+  .crossword-print-footer span {
+    color: #999 !important;
+  }
 }

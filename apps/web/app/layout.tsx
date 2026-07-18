@@ -1,5 +1,5 @@
 import type { Metadata } from "next"
-import { ClerkProvider } from "@clerk/nextjs"
+import AuthProvider from "@/components/auth/AuthProvider"
 import fs from "fs"
 import path from "path"
 
@@ -23,7 +23,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <style dangerouslySetInnerHTML={{ __html: cssContent }} />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Space+Grotesk:wght@400;500;600;700&family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Outfit:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
         <script src="https://telegram.org/js/telegram-webapp.js" async />
         <script
           dangerouslySetInnerHTML={{
@@ -32,17 +32,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
       </head>
       <body className="font-sans bg-canvas text-ink antialiased transition-colors duration-200" suppressHydrationWarning>
-        {process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY ? (
-          <ClerkProvider
-            publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
-            signInUrl={process.env.NEXT_PUBLIC_CLERK_SIGN_IN_URL || "/"}
-            signUpUrl={process.env.NEXT_PUBLIC_CLERK_SIGN_UP_URL || "/"}
-          >
-            {children}
-          </ClerkProvider>
-        ) : (
-          children
-        )}
+        <AuthProvider>
+          {children}
+        </AuthProvider>
       </body>
     </html>
   )

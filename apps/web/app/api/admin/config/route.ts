@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { readFileSync, writeFileSync, existsSync } from "fs"
 import { join, dirname, resolve } from "path"
+import { execSync } from "child_process"
 
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || ""
 
@@ -33,11 +34,28 @@ function mask(val: string): string {
   return val.slice(0, 4) + "********" + val.slice(-4)
 }
 
+function setConvexEnv(key: string, value: string): void {
+  try {
+    const projectRoot = findProjectRoot(process.cwd())
+    const webDir = join(projectRoot, "apps", "web")
+    execSync(`npx convex env set ${key} "${value}"`, {
+      cwd: webDir,
+      stdio: "pipe",
+      timeout: 30000,
+    })
+  } catch (error) {
+    console.error(`Failed to set Convex env var ${key}:`, error)
+  }
+}
+
 export async function GET(request: NextRequest) {
   const projectRoot = findProjectRoot(process.cwd())
   const webEnvPath = join(projectRoot, "apps", "web", ".env")
+  const webLocalEnvPath = join(projectRoot, "apps", "web", ".env.local")
 
-  const webVars = existsSync(webEnvPath) ? parseEnv(readFileSync(webEnvPath, "utf-8")) : {}
+  const webEnvVars = existsSync(webEnvPath) ? parseEnv(readFileSync(webEnvPath, "utf-8")) : {}
+  const webLocalVars = existsSync(webLocalEnvPath) ? parseEnv(readFileSync(webLocalEnvPath, "utf-8")) : {}
+  const webVars = { ...webEnvVars, ...webLocalVars }
 
   const { searchParams } = new URL(request.url)
   const exportAll = searchParams.get("export") === "true"
@@ -96,6 +114,10 @@ export async function POST(request: NextRequest) {
 
     writeEnv(webEnvPath, webEnv)
     writeEnv(botEnvPath, botEnv)
+
+    if (body.OPENROUTER_API_KEYS !== undefined) {
+      setConvexEnv("OPENROUTER_API_KEYS", body.OPENROUTER_API_KEYS)
+    }
 
     return NextResponse.json({ data: { success: true } })
   } catch (e: unknown) {

@@ -19,65 +19,42 @@ Students upload multiple-choice question PDFs or enter a topic, and the system u
 
 ## Local Development
 
-**Prerequisites:** Node.js 20+, Docker, Python 3.12+
+**Prerequisites:** Docker
 
 ```bash
-# Clone and install
+# Clone
 git clone https://github.com/BaratovAbdulaziz/quiz_app.git
 cd quiz_app
-npm install
 
-# Start local infra (Postgres + MinIO)
-bash scripts/docker-up.sh
+# Set env vars (copy and fill in your keys)
+cp .env.example .env
 
-# Run database migrations
-npm run migrate --workspace=@quiz-app/shared
+# Start everything (Postgres + MinIO + app)
+docker compose up -d
 
-# Start dev server
-npm run dev
+# App runs at http://localhost:3000
+# Postgres on :5432, MinIO console on :9001
 ```
 
-The web app runs at `http://localhost:3000`.
+Migrations run automatically on first start. No Node.js, Python, or manual setup needed.
 
-**Telegram bot** (optional, separate terminal):
-```bash
-cd apps/bot
-python -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-python -m src.bot
-```
+### Configuration via Admin Panel
+
+1. Open `http://localhost:3000` → admin panel
+2. Click **Export Config** — copies all env vars to clipboard as JSON
+3. Paste this JSON into your Railway deployment's admin panel to transfer all settings
 
 ## Railway Deployment
 
-The project is configured to deploy on [Railway](https://railway.app). The `quiz-app-web` service auto-builds from the `main` branch.
-
-### Environment Variables
-
-Add these to the `quiz-app-web` service on Railway:
-
-| Variable | Description |
-|---|---|
-| `DATABASE_URL` | Railway Postgres reference (auto-injected) |
-| `JWT_SECRET` | Secret for signing JWT tokens |
-| `TELEGRAM_BOT_TOKEN` | Telegram Bot API token |
-| `R2_ENDPOINT` | S3 endpoint (Railway Bucket or Cloudflare R2) |
-| `R2_ACCESS_KEY` | S3 access key |
-| `R2_SECRET_KEY` | S3 secret key |
-| `R2_BUCKET` | S3 bucket name |
-| `APP_URL` | Public app URL (e.g. `https://quiz-app.up.railway.app`) |
-| `NEXT_PUBLIC_API_URL` | Same as APP_URL |
-| `OPENROUTER_API_KEYS` | Comma-separated OpenRouter API keys |
-| `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | Clerk publishable key |
-| `CLERK_SECRET_KEY` | Clerk secret key |
-| `CLERK_WEBHOOK_SECRET` | Clerk webhook secret |
-| `CLERK_ISSUER_URL` | Clerk issuer URL |
-
-Railway automatically sets `PORT` and provides reference variables for Postgres, Redis, and Bucket services.
-
-### Deploy
-
 Push to `main` — Railway auto-builds and deploys. No Docker Compose, PM2, Nginx, or SSL config needed.
+
+### Quick Setup
+
+1. Deploy to Railway (auto-builds from `main`)
+2. Add a Postgres plugin — `DATABASE_URL` is injected automatically
+3. Open the app → admin panel → **Import Config**
+4. Paste the JSON exported from your local Docker setup
+5. All env vars are configured — done
 
 ## Project Structure
 

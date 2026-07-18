@@ -23,7 +23,7 @@ All screens follow a clean, modern, minimal design with one primary action per v
 
 ### Library Screen
 
-**Purpose:** Main hub — browse and manage all quizzes.
+**Purpose:** Main hub — browse and manage all quizzes and crosswords.
 
 **Components:**
 - Tree-style list view with expandable folders and quiz items
@@ -56,8 +56,10 @@ All screens follow a clean, modern, minimal design with one primary action per v
 - Practice Mode button
 - Exam Mode button (with duration selector)
 - Share button
+- Teachers Mode button — opens analytics dashboard with attempt stats for shared content
+- Answer Key toggle — reveals all correct answers in the question list
 - Delete button
-- Question preview list (scrollable)
+- Question preview list (scrollable, expandable in Teachers Key mode)
 
 **Empty states:** N/A (quiz always has questions)
 
@@ -163,3 +165,31 @@ All screens follow a clean, modern, minimal design with one primary action per v
 
 **Navigation:**
 - Back button to library
+
+---
+
+### Crossword Screen
+
+**Purpose:** Solve an interactive crossword puzzle.
+
+**Components:**
+- Crossword grid with number labels and blocked cells
+- Across and Down clue sections in a 2-column layout
+- Per-clue input fields (uppercase, max length constrained by word)
+- Check Answers button (compares against stored words, shows green/red feedback)
+- Clear All button
+- Answer Key toggle — fills all answers into the grid for review
+- Teachers Mode button — opens analytics dashboard with attempt stats for shared content
+- Print button (blank puzzle for printing)
+- Print Key button (with answers filled in, then prints)
+- Download PDF button
+- Share button (in header, generates a share link)
+- Keyboard navigation: arrow keys, Tab to toggle direction, Backspace/Delete
+
+**Empty states:** N/A
+
+**Error states:**
+- Crossword data missing: loading spinner
+
+**Navigation:**
+- Back arrow returns to library

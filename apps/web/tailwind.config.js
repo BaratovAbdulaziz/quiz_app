@@ -4,7 +4,12 @@ module.exports = {
   theme: {
     fontFamily: {
       sans: ["Inter", "-apple-system", "BlinkMacSystemFont", "'Segoe UI'", "sans-serif"],
-      mono: ["'Geist Mono'", "'SF Mono'", "Menlo", "Consolas", "monospace"],
+      serif: ["'Playfair Display'", "Georgia", "'Times New Roman'", "serif"],
+      display: ["'Space Grotesk'", "Inter", "sans-serif"],
+      grotesk: ["'Space Grotesk'", "sans-serif"],
+      dm: ["'DM Sans'", "Inter", "sans-serif"],
+      outfit: ["'Outfit'", "Inter", "sans-serif"],
+      mono: ["'JetBrains Mono'", "'Geist Mono'", "'SF Mono'", "Menlo", "Consolas", "monospace"],
     },
     colors: {
       transparent: "transparent",

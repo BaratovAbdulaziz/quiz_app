@@ -14,6 +14,7 @@ export async function GET(request: NextRequest) {
 
     const all = await db.select({
       id: users.id,
+      clerkId: users.clerkId,
       telegramId: users.telegramId,
       telegramUsername: users.telegramUsername,
       displayName: users.displayName,

@@ -39,8 +39,13 @@ export async function POST(request: NextRequest) {
       displayName = clerkUser.fullName || clerkUser.firstName || clerkUser.username || displayName
       photoUrl = clerkUser.imageUrl ?? null
     } catch (e) {
-      console.error("[auth/clerk] getUser failed:", e)
-      return NextResponse.json({ error: { code: "USER_NOT_FOUND", message: "Clerk user not found" } }, { status: 401 })
+      console.error("[auth/clerk] getUser failed, proceeding with JWT claims:", e)
+      try {
+        const payload = JSON.parse(Buffer.from(clerkToken.split(".")[1], "base64").toString())
+        email = payload.email ?? null
+        displayName = payload.name ?? payload.given_name ?? displayName
+        photoUrl = payload.picture ?? null
+      } catch {}
     }
 
     let existing

@@ -11,3 +11,5 @@ __pycache__/
 .venv*/
 .killed
 apps/web/app/globals.css
+
+.env.local

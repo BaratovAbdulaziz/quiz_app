@@ -41,6 +41,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ data: { status: "started" } })
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : "Unknown error"
+      if (msg.includes("already running") || msg.includes("already launched")) {
+        try {
+          execSync("pm2 restart quiz-app-bot", { timeout: 10000, stdio: "pipe" })
+          return NextResponse.json({ data: { status: "started", message: "Restarted" } })
+        } catch {}
+      }
       return NextResponse.json({ error: { code: "BOT_ERROR", message: msg } }, { status: 500 })
     }
   }
