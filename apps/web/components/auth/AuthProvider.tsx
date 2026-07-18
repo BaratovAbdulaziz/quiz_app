@@ -9,10 +9,10 @@ const clerkPublishableKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
 
 const convex = convexUrl ? new ConvexReactClient(convexUrl) : null
 
+const DUMMY_KEY = "pk_test_ZHVtbXkxMjM0NTY3ODkw"
+
 export default function AuthProvider({ children }: { children: React.ReactNode }) {
-  if (!clerkPublishableKey) {
-    return <>{children}</>
-  }
+  const key = clerkPublishableKey || DUMMY_KEY
 
   const inner = convex ? (
     <ConvexProviderWithClerk client={convex} useAuth={useAuth}>
@@ -24,7 +24,7 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
 
   return (
     <ClerkProvider
-      publishableKey={clerkPublishableKey}
+      publishableKey={key}
       signInUrl={process.env.NEXT_PUBLIC_CLERK_SIGN_IN_URL || "/"}
       signUpUrl={process.env.NEXT_PUBLIC_CLERK_SIGN_UP_URL || "/"}
     >
